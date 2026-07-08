@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "まなびより",
+    "slug": "kizuki-memo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "kizukimemo",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.kizukimemo"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F3EE"
+      },
+      "package": "com.example.kizukimemo"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
