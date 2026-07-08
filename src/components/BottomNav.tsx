@@ -57,17 +57,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderTopWidth: 1,
-    bottom: 0,
     flexDirection: "row",
+    flexShrink: 0,
     gap: spacing.xs,
     justifyContent: "space-around",
-    left: 0,
     minHeight: 76,
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
-    position: "absolute",
-    right: 0
   },
   item: {
     alignItems: "center",

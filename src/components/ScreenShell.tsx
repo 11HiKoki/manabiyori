@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   footerSpace: {
-    paddingBottom: 96
+    paddingBottom: spacing.xxl
   },
   header: {
     gap: spacing.sm
