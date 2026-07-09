@@ -24,6 +24,9 @@ export type Database = {
           compared_options: string;
           rejected_reason: string;
           decision_criteria: string;
+          ai_todo: string;
+          dlab_reading: string;
+          dlab_video: string;
           value_item: string;
           value_reflection: string;
           emotions: string[];
@@ -47,6 +50,9 @@ export type Database = {
           compared_options?: string;
           rejected_reason?: string;
           decision_criteria?: string;
+          ai_todo?: string;
+          dlab_reading?: string;
+          dlab_video?: string;
           value_item?: string;
           value_reflection?: string;
           emotions?: string[];
@@ -70,6 +76,9 @@ export type Database = {
           compared_options?: string;
           rejected_reason?: string;
           decision_criteria?: string;
+          ai_todo?: string;
+          dlab_reading?: string;
+          dlab_video?: string;
           value_item?: string;
           value_reflection?: string;
           emotions?: string[];
@@ -197,6 +206,7 @@ export type Database = {
           met_place: string;
           hobbies: string;
           likes: string;
+          favorite_points: string;
           dislikes: string;
           values_note: string;
           next_topic: string;
@@ -214,6 +224,7 @@ export type Database = {
           met_place?: string;
           hobbies?: string;
           likes?: string;
+          favorite_points?: string;
           dislikes?: string;
           values_note?: string;
           next_topic?: string;
@@ -231,6 +242,7 @@ export type Database = {
           met_place?: string;
           hobbies?: string;
           likes?: string;
+          favorite_points?: string;
           dislikes?: string;
           values_note?: string;
           next_topic?: string;

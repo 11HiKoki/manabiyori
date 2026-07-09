@@ -23,6 +23,7 @@ export function MemoDetailScreen({ memo, onBack, onCreate, onEdit, onDelete }: M
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const hasThoughts = Boolean(memo.hesitation || memo.comparedOptions || memo.rejectedReason || memo.decisionCriteria);
   const hasValues = Boolean(memo.valueItem || memo.valueReflection);
+  const hasLearningQueue = Boolean(memo.aiTodo || memo.dlabReading || memo.dlabVideo);
 
   const deleteMemo = async () => {
     setDeleting(true);
@@ -81,6 +82,17 @@ export function MemoDetailScreen({ memo, onBack, onCreate, onEdit, onDelete }: M
           <DetailBlock title="教訓" body={memo.lesson} />
         </View>
       </View>
+
+      {hasLearningQueue ? (
+        <View style={styles.detailSection}>
+          <Text style={styles.sectionTitle}>AI・Dラボメモ</Text>
+          <View style={styles.detailPanel}>
+            <DetailBlock title="AIでやりたいこと" body={memo.aiTodo} />
+            <DetailBlock title="Dラボで読みたい記事" body={memo.dlabReading} />
+            <DetailBlock title="Dラボで観たい動画" body={memo.dlabVideo} />
+          </View>
+        </View>
+      ) : null}
 
       {hasThoughts ? (
         <View style={styles.detailSection}>

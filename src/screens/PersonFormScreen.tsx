@@ -31,6 +31,7 @@ export function PersonFormScreen({
   const [metPlace, setMetPlace] = useState(initialPerson?.metPlace ?? "");
   const [hobbies, setHobbies] = useState(initialPerson?.hobbies ?? "");
   const [likes, setLikes] = useState(initialPerson?.likes ?? "");
+  const [favoritePoints, setFavoritePoints] = useState(initialPerson?.favoritePoints ?? "");
   const [dislikes, setDislikes] = useState(initialPerson?.dislikes ?? "");
   const [valuesNote, setValuesNote] = useState(initialPerson?.valuesNote ?? "");
   const [memo, setMemo] = useState(initialPerson?.memo ?? "");
@@ -56,6 +57,7 @@ export function PersonFormScreen({
       metPlace: metPlace.trim(),
       hobbies: hobbies.trim(),
       likes: likes.trim(),
+      favoritePoints: favoritePoints.trim(),
       dislikes: dislikes.trim(),
       valuesNote: valuesNote.trim(),
       nextTopic: initialPerson?.nextTopic ?? "",
@@ -94,7 +96,7 @@ export function PersonFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="好み・趣味" caption="会話から見えた好きなところや好きなものを、決めつけずにメモします。">
+          <FormSection title="好み・趣味" caption="好きなものと、その人自身の好きなところを分けて残します。">
             <Field label="趣味">
               <TextInput
                 multiline
@@ -106,14 +108,25 @@ export function PersonFormScreen({
               />
             </Field>
 
-            <Field label="好きなところ・好きなもの">
+            <Field label="好きなもの">
               <TextInput
                 multiline
-                placeholder="その人の好きなところ、好きそうなもの、よく話していたこと"
+                placeholder="好きそうなもの、よく話していたこと"
                 placeholderTextColor={colors.textMuted}
                 style={[styles.input, styles.textAreaSmall]}
                 value={likes}
                 onChangeText={setLikes}
+              />
+            </Field>
+
+            <Field label="その人の好きなところ">
+              <TextInput
+                multiline
+                placeholder="魅力に感じるところ、尊敬しているところ、いいなと思ったところ"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={favoritePoints}
+                onChangeText={setFavoritePoints}
               />
             </Field>
           </FormSection>

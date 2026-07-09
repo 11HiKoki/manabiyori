@@ -17,12 +17,9 @@ type MemoFormScreenProps = {
   subtitle?: string;
 };
 
-type MemoTemplate = "通常" | "AIでやりたいこと" | "Dラボ";
-
 const domains: Domain[] = ["仕事", "プライベート"];
 const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓"];
 const emotions = ["安心", "焦り", "納得", "反省", "前向き", "もやもや"];
-const memoTemplates: MemoTemplate[] = ["通常", "AIでやりたいこと", "Dラボ"];
 const visibilityOptions: Array<{ label: string; value: MemoVisibility }> = [
   { label: "自分だけ", value: "private" },
   { label: "友達", value: "friends" },
@@ -38,7 +35,6 @@ export function MemoFormScreen({
   subtitle = "出来事を責めずに分解して、次の行動へつなげます。"
 }: MemoFormScreenProps) {
   const [domain, setDomain] = useState<Domain>(initialMemo?.domain ?? "仕事");
-  const [memoTemplate, setMemoTemplate] = useState<MemoTemplate>("通常");
   const [selectedTypes, setSelectedTypes] = useState<MemoKind[]>(initialMemo?.types.length ? initialMemo.types : ["気づき"]);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(initialMemo?.emotions ?? []);
   const [visibility, setVisibility] = useState<MemoVisibility>(initialMemo?.visibility ?? "private");
@@ -52,51 +48,14 @@ export function MemoFormScreen({
   const [comparedOptions, setComparedOptions] = useState(initialMemo?.comparedOptions ?? "");
   const [rejectedReason, setRejectedReason] = useState(initialMemo?.rejectedReason ?? "");
   const [decisionCriteria, setDecisionCriteria] = useState(initialMemo?.decisionCriteria ?? "");
+  const [aiTodo, setAiTodo] = useState(initialMemo?.aiTodo ?? "");
+  const [dlabReading, setDlabReading] = useState(initialMemo?.dlabReading ?? "");
+  const [dlabVideo, setDlabVideo] = useState(initialMemo?.dlabVideo ?? "");
   const [valueItem, setValueItem] = useState(initialMemo?.valueItem ?? "");
   const [valueReflection, setValueReflection] = useState(initialMemo?.valueReflection ?? "");
   const [date, setDate] = useState(initialMemo?.date ?? todayString());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const applyTemplate = (template: MemoTemplate) => {
-    setMemoTemplate(template);
-
-    if (template === "通常") {
-      return;
-    }
-
-    setDomain("プライベート");
-    setSelectedTypes(["学び"]);
-
-    if (template === "AIでやりたいこと") {
-      if (!memoTitle.trim()) {
-        setMemoTitle("AIでやりたいこと");
-      }
-      if (!event.trim()) {
-        setEvent("AIで試したいこと:\n");
-      }
-      if (!insight.trim()) {
-        setInsight("なぜやりたいか:\n");
-      }
-      if (!nextAction.trim()) {
-        setNextAction("最初に試すことを1つ決める。");
-      }
-      return;
-    }
-
-    if (!memoTitle.trim()) {
-      setMemoTitle("Dラボで読みたい・観たいこと");
-    }
-    if (!event.trim()) {
-      setEvent("読みたいもの:\n観たい動画:\n");
-    }
-    if (!insight.trim()) {
-      setInsight("気になった理由:\n");
-    }
-    if (!nextAction.trim()) {
-      setNextAction("次に読む/観るものを1つ選ぶ。");
-    }
-  };
 
   const save = async () => {
     if (selectedTypes.length === 0) {
@@ -120,6 +79,9 @@ export function MemoFormScreen({
       comparedOptions: comparedOptions.trim(),
       rejectedReason: rejectedReason.trim(),
       decisionCriteria: decisionCriteria.trim(),
+      aiTodo: aiTodo.trim(),
+      dlabReading: dlabReading.trim(),
+      dlabVideo: dlabVideo.trim(),
       valueItem: valueItem.trim(),
       valueReflection: valueReflection.trim(),
       emotions: selectedEmotions,
@@ -138,10 +100,6 @@ export function MemoFormScreen({
       <ScreenShell title={screenTitle} subtitle={subtitle}>
         <View style={styles.form}>
           <FormSection title="基本情報" caption="あとから探しやすいように、分類と日付を整えます。">
-            <Field label="メモ用途">
-              <Segmented options={memoTemplates} value={memoTemplate} onChange={applyTemplate} wrap />
-            </Field>
-
             <Field label="分野">
               <Segmented options={domains} value={domain} onChange={setDomain} />
             </Field>
@@ -166,6 +124,41 @@ export function MemoFormScreen({
 
             <Field label="公開範囲">
               <VisibilitySegmented value={visibility} onChange={setVisibility} />
+            </Field>
+          </FormSection>
+
+          <FormSection title="AI・Dラボメモ" caption="試したいAI活用や、Dラボで読みたい記事・観たい動画を残します。">
+            <Field label="AIでやりたいこと">
+              <TextInput
+                multiline
+                placeholder="AIで試したいこと、作りたいもの、相談したいこと"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={aiTodo}
+                onChangeText={setAiTodo}
+              />
+            </Field>
+
+            <Field label="Dラボで読みたい記事">
+              <TextInput
+                multiline
+                placeholder="読みたい記事、あとで調べたいテーマ"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={dlabReading}
+                onChangeText={setDlabReading}
+              />
+            </Field>
+
+            <Field label="Dラボで観たい動画">
+              <TextInput
+                multiline
+                placeholder="観たい動画、あとで見返したい内容"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={dlabVideo}
+                onChangeText={setDlabVideo}
+              />
             </Field>
           </FormSection>
 

@@ -34,6 +34,9 @@ export type Memo = {
   comparedOptions: string;
   rejectedReason: string;
   decisionCriteria: string;
+  aiTodo: string;
+  dlabReading: string;
+  dlabVideo: string;
   valueItem: string;
   valueReflection: string;
   emotions: string[];
@@ -53,6 +56,7 @@ export type PersonProfile = {
   metPlace: string;
   hobbies: string;
   likes: string;
+  favoritePoints: string;
   dislikes: string;
   valuesNote: string;
   nextTopic: string;

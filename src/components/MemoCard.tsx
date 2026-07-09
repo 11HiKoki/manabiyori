@@ -35,7 +35,7 @@ export function MemoCard({ memo, onPress, compact = false }: MemoCardProps) {
         <Text style={styles.title} numberOfLines={compact ? 1 : 2}>
           {memo.title}
         </Text>
-        <LabeledPreview label="気づき" text={memo.insight || memo.event} lines={compact ? 2 : 3} />
+        <LabeledPreview label="気づき" text={memo.insight} lines={compact ? 2 : 3} />
         {!compact ? <LabeledPreview label="次の行動" text={memo.nextAction} lines={2} muted /> : null}
       </View>
 
