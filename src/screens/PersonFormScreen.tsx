@@ -22,7 +22,7 @@ export function PersonFormScreen({
   initialPerson,
   submitLabel = "保存",
   title = "人登録",
-  subtitle = "その人らしさと、次に話したいことを静かに残します。"
+  subtitle = "その人らしさを、後から思い出せる形で残します。"
 }: PersonFormScreenProps) {
   const [name, setName] = useState(initialPerson?.name ?? "");
   const [nickname, setNickname] = useState(initialPerson?.nickname ?? "");
@@ -33,7 +33,6 @@ export function PersonFormScreen({
   const [likes, setLikes] = useState(initialPerson?.likes ?? "");
   const [dislikes, setDislikes] = useState(initialPerson?.dislikes ?? "");
   const [valuesNote, setValuesNote] = useState(initialPerson?.valuesNote ?? "");
-  const [nextTopic, setNextTopic] = useState(initialPerson?.nextTopic ?? "");
   const [memo, setMemo] = useState(initialPerson?.memo ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +58,7 @@ export function PersonFormScreen({
       likes: likes.trim(),
       dislikes: dislikes.trim(),
       valuesNote: valuesNote.trim(),
-      nextTopic: nextTopic.trim(),
+      nextTopic: initialPerson?.nextTopic ?? "",
       memo: memo.trim()
     });
 
@@ -95,7 +94,7 @@ export function PersonFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="好み・趣味" caption="会話から見えた好きなものを、決めつけずにメモします。">
+          <FormSection title="好み・趣味" caption="会話から見えた好きなところや好きなものを、決めつけずにメモします。">
             <Field label="趣味">
               <TextInput
                 multiline
@@ -107,10 +106,10 @@ export function PersonFormScreen({
               />
             </Field>
 
-            <Field label="好きなもの">
+            <Field label="好きなところ・好きなもの">
               <TextInput
                 multiline
-                placeholder="好きそうなもの、よく話していたこと"
+                placeholder="その人の好きなところ、好きそうなもの、よく話していたこと"
                 placeholderTextColor={colors.textMuted}
                 style={[styles.input, styles.textAreaSmall]}
                 value={likes}
@@ -143,18 +142,7 @@ export function PersonFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="次に話したいこと" caption="次の会話で自然に思い出せる材料を置いておきます。">
-            <Field label="次に話したいこと">
-              <TextInput
-                multiline
-                placeholder="次に聞きたいこと、話したい話題"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.textAreaSmall]}
-                value={nextTopic}
-                onChangeText={setNextTopic}
-              />
-            </Field>
-
+          <FormSection title="メモ" caption="会話メモに分けるほどではないプロフィール情報を残します。">
             <Field label="自由メモ">
               <TextInput
                 multiline

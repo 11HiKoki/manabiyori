@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 
 import { BottomNav } from "./src/components/BottomNav";
 import { ConversationNoteFormScreen } from "./src/screens/ConversationNoteFormScreen";
@@ -31,6 +31,30 @@ import { colors } from "./src/theme";
 import type { AppRoute, ConversationNote, ConversationNoteDraft, Memo, MemoDraft, PersonDraft, PersonProfile, WeekStart } from "./src/types";
 
 const mainRoutes: AppRoute[] = ["home", "create", "list", "reflection", "people", "settings"];
+const allRoutes: AppRoute[] = [
+  "login",
+  "home",
+  "create",
+  "edit",
+  "list",
+  "detail",
+  "reflection",
+  "people",
+  "personCreate",
+  "personEdit",
+  "personDetail",
+  "conversationCreate",
+  "conversationEdit",
+  "settings"
+];
+const conversationRoutes: AppRoute[] = ["personDetail", "conversationCreate", "conversationEdit"];
+
+type BrowserNavigationState = {
+  conversationNoteId?: string;
+  memoId?: string;
+  personId?: string;
+  route: AppRoute;
+};
 
 export default function App() {
   const [fontsLoaded] = useFonts(Ionicons.font);
@@ -52,6 +76,35 @@ export default function App() {
   const [conversationNotesError, setConversationNotesError] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState<WeekStart>("monday");
 
+  const applyNavigationState = (state: BrowserNavigationState, mode: "push" | "replace" = "push") => {
+    setRoute(state.route);
+
+    if (state.memoId !== undefined) {
+      setSelectedMemoId(state.memoId);
+    }
+
+    if (state.personId !== undefined) {
+      setSelectedPersonId(state.personId);
+    }
+
+    if (state.conversationNoteId !== undefined) {
+      setSelectedConversationNoteId(state.conversationNoteId);
+    }
+
+    writeBrowserNavigationState(state, mode);
+  };
+
+  const applyRouteFromLocation = (fallbackRoute: AppRoute) => {
+    const browserState = readBrowserNavigationState();
+
+    if (!browserState || browserState.route === "login") {
+      applyNavigationState({ route: fallbackRoute }, "replace");
+      return;
+    }
+
+    applyNavigationState(browserState, "replace");
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -67,7 +120,11 @@ export default function App() {
         }
 
         setSession(data.session);
-        setRoute(data.session ? "home" : "login");
+        if (data.session) {
+          applyRouteFromLocation("home");
+        } else {
+          applyNavigationState({ route: "login" }, "replace");
+        }
         setAuthLoading(false);
       })
       .catch((error: unknown) => {
@@ -83,7 +140,11 @@ export default function App() {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      setRoute(nextSession ? "home" : "login");
+      if (nextSession) {
+        applyRouteFromLocation("home");
+      } else {
+        applyNavigationState({ route: "login" }, "replace");
+      }
       setAuthError(null);
       setAuthLoading(false);
     });
@@ -115,6 +176,37 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!canUseBrowserHistory()) {
+      return undefined;
+    }
+
+    const handlePopState = () => {
+      if (!session) {
+        setRoute("login");
+        return;
+      }
+
+      const browserState = readBrowserNavigationState();
+
+      if (!browserState || browserState.route === "login") {
+        setRoute("home");
+        return;
+      }
+
+      setRoute(browserState.route);
+      setSelectedMemoId(browserState.memoId ?? "");
+      setSelectedPersonId(browserState.personId ?? "");
+      setSelectedConversationNoteId(browserState.conversationNoteId ?? "");
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [session]);
+
+  useEffect(() => {
     if (!session) {
       setMemos([]);
       setSelectedMemoId("");
@@ -133,6 +225,14 @@ export default function App() {
     void loadPeople(session.user.id);
   }, [session]);
 
+  useEffect(() => {
+    if (!session || !selectedPersonId || !conversationRoutes.includes(route)) {
+      return;
+    }
+
+    void loadConversationNotes(session.user.id, selectedPersonId);
+  }, [route, selectedPersonId, session]);
+
   const selectedMemo = useMemo(
     () => memos.find((memo) => memo.id === selectedMemoId),
     [memos, selectedMemoId]
@@ -149,24 +249,22 @@ export default function App() {
   );
 
   const navigate = (nextRoute: AppRoute) => {
-    setRoute(nextRoute);
+    applyNavigationState({
+      conversationNoteId: selectedConversationNoteId || undefined,
+      memoId: selectedMemoId || undefined,
+      personId: selectedPersonId || undefined,
+      route: nextRoute
+    });
   };
 
   const openMemo = (memoId: string) => {
-    setSelectedMemoId(memoId);
-    setRoute("detail");
+    applyNavigationState({ memoId, route: "detail" });
   };
 
   const openPerson = (personId: string) => {
-    setSelectedPersonId(personId);
     setConversationNotes([]);
-    setSelectedConversationNoteId("");
     setConversationNotesError(null);
-    setRoute("personDetail");
-
-    if (session) {
-      void loadConversationNotes(session.user.id, personId);
-    }
+    applyNavigationState({ conversationNoteId: "", personId, route: "personDetail" });
   };
 
   const loadMemos = async (userId: string) => {
@@ -197,8 +295,7 @@ export default function App() {
     }
 
     setMemos((current) => [result.memo, ...current]);
-    setSelectedMemoId(result.memo.id);
-    setRoute("detail");
+    applyNavigationState({ memoId: result.memo.id, route: "detail" });
     return {};
   };
 
@@ -218,8 +315,7 @@ export default function App() {
     }
 
     setMemos((current) => sortMemos(current.map((memo) => (memo.id === result.memo.id ? result.memo : memo))));
-    setSelectedMemoId(result.memo.id);
-    setRoute("detail");
+    applyNavigationState({ memoId: result.memo.id, route: "detail" });
     return {};
   };
 
@@ -240,8 +336,7 @@ export default function App() {
 
     const nextMemos = memos.filter((memo) => memo.id !== selectedMemo.id);
     setMemos(nextMemos);
-    setSelectedMemoId(nextMemos[0]?.id ?? "");
-    setRoute("list");
+    applyNavigationState({ memoId: nextMemos[0]?.id ?? "", route: "list" });
     return {};
   };
 
@@ -292,11 +387,9 @@ export default function App() {
     }
 
     setPeople((current) => [result.person, ...current]);
-    setSelectedPersonId(result.person.id);
     setConversationNotes([]);
-    setSelectedConversationNoteId("");
     setConversationNotesError(null);
-    setRoute("personDetail");
+    applyNavigationState({ conversationNoteId: "", personId: result.person.id, route: "personDetail" });
     return {};
   };
 
@@ -316,8 +409,7 @@ export default function App() {
     }
 
     setPeople((current) => current.map((person) => (person.id === result.person.id ? result.person : person)));
-    setSelectedPersonId(result.person.id);
-    setRoute("personDetail");
+    applyNavigationState({ personId: result.person.id, route: "personDetail" });
     return {};
   };
 
@@ -338,12 +430,10 @@ export default function App() {
 
     const nextPeople = people.filter((person) => person.id !== selectedPerson.id);
     setPeople(nextPeople);
-    setSelectedPersonId(nextPeople[0]?.id ?? "");
     setConversationNotes([]);
-    setSelectedConversationNoteId("");
     setConversationNotesError(null);
     setConversationNotesLoading(false);
-    setRoute("people");
+    applyNavigationState({ conversationNoteId: "", personId: nextPeople[0]?.id ?? "", route: "people" });
     return {};
   };
 
@@ -359,8 +449,7 @@ export default function App() {
     }
 
     setConversationNotes((current) => sortConversationNotes([result.conversationNote, ...current]));
-    setSelectedConversationNoteId(result.conversationNote.id);
-    setRoute("personDetail");
+    applyNavigationState({ conversationNoteId: result.conversationNote.id, personId: result.conversationNote.personId, route: "personDetail" });
     return {};
   };
 
@@ -382,8 +471,7 @@ export default function App() {
     setConversationNotes((current) =>
       sortConversationNotes(current.map((conversationNote) => (conversationNote.id === result.conversationNote.id ? result.conversationNote : conversationNote)))
     );
-    setSelectedConversationNoteId(result.conversationNote.id);
-    setRoute("personDetail");
+    applyNavigationState({ conversationNoteId: result.conversationNote.id, personId: result.conversationNote.personId, route: "personDetail" });
     return {};
   };
 
@@ -402,8 +490,7 @@ export default function App() {
       return { error: result.error };
     }
 
-    setSelectedConversationNoteId("");
-    setRoute("personDetail");
+    applyNavigationState({ conversationNoteId: "", personId: selectedPerson.id, route: "personDetail" });
     await loadConversationNotes(session.user.id, selectedPerson.id);
     return {};
   };
@@ -574,8 +661,7 @@ export default function App() {
             onDeleteConversationNote={removeConversationNote}
             onEdit={() => navigate("personEdit")}
             onEditConversationNote={(conversationNoteId) => {
-              setSelectedConversationNoteId(conversationNoteId);
-              navigate("conversationEdit");
+              applyNavigationState({ conversationNoteId, personId: selectedPerson.id, route: "conversationEdit" });
             }}
             onRetryConversationNotes={() => {
               if (session && selectedPerson) {
@@ -710,4 +796,67 @@ function sortConversationNotes(notes: ConversationNote[]) {
 
 function sortMemos(notes: Memo[]) {
   return [...notes].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function canUseBrowserHistory() {
+  return Platform.OS === "web" && typeof window !== "undefined" && typeof window.history !== "undefined";
+}
+
+function readBrowserNavigationState(): BrowserNavigationState | null {
+  if (!canUseBrowserHistory()) {
+    return null;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const route = params.get("screen") as AppRoute | null;
+
+  if (!route || !allRoutes.includes(route)) {
+    return null;
+  }
+
+  return {
+    conversationNoteId: params.get("conversationNoteId") ?? undefined,
+    memoId: params.get("memoId") ?? undefined,
+    personId: params.get("personId") ?? undefined,
+    route
+  };
+}
+
+function writeBrowserNavigationState(state: BrowserNavigationState, mode: "push" | "replace" = "push") {
+  if (!canUseBrowserHistory()) {
+    return;
+  }
+
+  const params = new URLSearchParams();
+
+  if (state.route !== "login") {
+    params.set("screen", state.route);
+  }
+
+  if (state.memoId) {
+    params.set("memoId", state.memoId);
+  }
+
+  if (state.personId) {
+    params.set("personId", state.personId);
+  }
+
+  if (state.conversationNoteId) {
+    params.set("conversationNoteId", state.conversationNoteId);
+  }
+
+  const query = params.toString();
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
+  const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+  if (nextUrl === currentUrl) {
+    return;
+  }
+
+  if (mode === "replace") {
+    window.history.replaceState(state, "", nextUrl);
+    return;
+  }
+
+  window.history.pushState(state, "", nextUrl);
 }

@@ -36,7 +36,6 @@ export function PeopleListScreen({ people, loading = false, error = null, onCrea
         person.likes,
         person.dislikes,
         person.valuesNote,
-        person.nextTopic,
         person.memo
       ].some((value) => value.toLowerCase().includes(normalizedQuery))
     );
@@ -102,7 +101,7 @@ function PersonCard({ person, onPress }: { person: PersonProfile; onPress: () =>
           </Text>
         ) : null}
         <Text style={styles.preview} numberOfLines={2}>
-          {person.nextTopic || person.valuesNote || person.memo || "次に話したいことを残しておけます。"}
+          {person.likes || person.valuesNote || person.memo || "その人らしさを残しておけます。"}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

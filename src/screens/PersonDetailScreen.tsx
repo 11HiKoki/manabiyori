@@ -115,10 +115,9 @@ export function PersonDetailScreen({
           <DetailBlock title="初めて会った日" body={person.metAt ?? ""} />
           <DetailBlock title="出会った場所" body={person.metPlace} />
           <DetailBlock title="趣味" body={person.hobbies} />
-          <DetailBlock title="好きなもの" body={person.likes} />
+          <DetailBlock title="好きなところ・好きなもの" body={person.likes} />
           <DetailBlock title="苦手そうなもの・配慮したいこと" body={person.dislikes} />
           <DetailBlock title="大事にしていそうなこと" body={person.valuesNote} />
-          <DetailBlock title="次に話したいこと" body={person.nextTopic} highlight />
           <DetailBlock title="自由メモ" body={person.memo} />
         </View>
       </View>
@@ -530,7 +529,8 @@ const styles = StyleSheet.create({
   miniBlock: {
     flex: 1,
     gap: spacing.xs,
-    minWidth: 180
+    minWidth: 180,
+    width: "100%"
   },
   miniLabel: {
     color: colors.accentDark,
@@ -539,14 +539,14 @@ const styles = StyleSheet.create({
   },
   miniBody: {
     color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 21
+    flexShrink: 1,
+    fontSize: 14
   },
   miniBodyStrong: {
     color: colors.text,
+    flexShrink: 1,
     fontSize: 15,
-    fontWeight: "800",
-    lineHeight: 22
+    fontWeight: "800"
   },
   messagePanel: {
     alignItems: "flex-start",
