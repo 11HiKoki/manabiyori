@@ -2,9 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { AutoSaveStatusText } from "../components/AutoSaveStatusText";
 import { FormSection } from "../components/FormSection";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenShell } from "../components/ScreenShell";
+import { useAutoSavedDraft } from "../hooks/useAutoSavedDraft";
 import { colors, radii, spacing } from "../theme";
 import type { ConversationNote, ConversationNoteDraft, PersonProfile } from "../types";
 
@@ -16,6 +18,17 @@ type ConversationNoteFormScreenProps = {
   submitLabel?: string;
   title?: string;
   subtitle?: string;
+};
+
+type ConversationNoteFormAutoSaveDraft = {
+  followUp: string;
+  followUpDone: boolean;
+  impression: string;
+  nextQuestion: string;
+  place: string;
+  promised: string;
+  talkedAt: string;
+  topic: string;
 };
 
 export function ConversationNoteFormScreen({
@@ -37,6 +50,33 @@ export function ConversationNoteFormScreen({
   const [followUpDone, setFollowUpDone] = useState(initialConversationNote?.followUpDone ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoSaveKey = initialConversationNote
+    ? `autosave.conversation.edit.${initialConversationNote.id}`
+    : `autosave.conversation.create.${person.id}`;
+  const { clearDraft, status: autoSaveStatus } = useAutoSavedDraft<ConversationNoteFormAutoSaveDraft>({
+    draft: {
+      followUp,
+      followUpDone,
+      impression,
+      nextQuestion,
+      place,
+      promised,
+      talkedAt,
+      topic
+    },
+    enabled: !saving,
+    key: autoSaveKey,
+    onRestore: (draft) => {
+      if (draft.talkedAt !== undefined) setTalkedAt(draft.talkedAt);
+      if (draft.place !== undefined) setPlace(draft.place);
+      if (draft.topic !== undefined) setTopic(draft.topic);
+      if (draft.impression !== undefined) setImpression(draft.impression);
+      if (draft.nextQuestion !== undefined) setNextQuestion(draft.nextQuestion);
+      if (draft.promised !== undefined) setPromised(draft.promised);
+      if (draft.followUp !== undefined) setFollowUp(draft.followUp);
+      if (draft.followUpDone !== undefined) setFollowUpDone(draft.followUpDone);
+    }
+  });
 
   const save = async () => {
     const trimmedTalkedAt = talkedAt.trim();
@@ -64,13 +104,23 @@ export function ConversationNoteFormScreen({
     if (result.error) {
       setError(result.error);
       setSaving(false);
+      return;
     }
+
+    await clearDraft();
+  };
+
+  const cancel = async () => {
+    await clearDraft();
+    onCancel();
   };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
       <ScreenShell title={title} subtitle={subtitle}>
         <View style={styles.form}>
+          <AutoSaveStatusText status={autoSaveStatus} />
+
           <View style={styles.personPill}>
             <Ionicons name="person-outline" size={18} color={colors.accentDark} />
             <Text style={styles.personPillText}>{person.nickname || person.name}</Text>
@@ -160,7 +210,7 @@ export function ConversationNoteFormScreen({
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.actions}>
-            <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={onCancel} style={styles.actionButton} />
+            <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={() => void cancel()} style={styles.actionButton} />
             <PrimaryButton disabled={saving} icon="checkmark-outline" label={saving ? "保存中" : submitLabel} onPress={save} style={styles.actionButton} />
           </View>
         </View>

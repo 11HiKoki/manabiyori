@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { AutoSaveStatusText } from "../components/AutoSaveStatusText";
 import { FormSection } from "../components/FormSection";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenShell } from "../components/ScreenShell";
+import { useAutoSavedDraft } from "../hooks/useAutoSavedDraft";
 import { colors, radii, spacing } from "../theme";
 import type { Domain, Memo, MemoDraft, MemoKind } from "../types";
 import type { MemoVisibility } from "../supabase/types";
@@ -15,6 +17,29 @@ type MemoFormScreenProps = {
   submitLabel?: string;
   title?: string;
   subtitle?: string;
+};
+
+type MemoFormAutoSaveDraft = {
+  aiTodo: string;
+  comparedOptions: string;
+  date: string;
+  decisionCriteria: string;
+  dlabReading: string;
+  dlabVideo: string;
+  domain: Domain;
+  event: string;
+  hesitation: string;
+  insight: string;
+  lesson: string;
+  memoTitle: string;
+  nextAction: string;
+  nextActionDone: boolean;
+  rejectedReason: string;
+  selectedEmotions: string[];
+  selectedTypes: MemoKind[];
+  valueItem: string;
+  valueReflection: string;
+  visibility: MemoVisibility;
 };
 
 const domains: Domain[] = ["仕事", "プライベート"];
@@ -56,6 +81,55 @@ export function MemoFormScreen({
   const [date, setDate] = useState(initialMemo?.date ?? todayString());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoSaveKey = initialMemo ? `autosave.memo.edit.${initialMemo.id}` : "autosave.memo.create";
+  const { clearDraft, status: autoSaveStatus } = useAutoSavedDraft<MemoFormAutoSaveDraft>({
+    draft: {
+      aiTodo,
+      comparedOptions,
+      date,
+      decisionCriteria,
+      dlabReading,
+      dlabVideo,
+      domain,
+      event,
+      hesitation,
+      insight,
+      lesson,
+      memoTitle,
+      nextAction,
+      nextActionDone,
+      rejectedReason,
+      selectedEmotions,
+      selectedTypes,
+      valueItem,
+      valueReflection,
+      visibility
+    },
+    enabled: !saving,
+    key: autoSaveKey,
+    onRestore: (draft) => {
+      if (draft.domain) setDomain(draft.domain);
+      if (draft.selectedTypes?.length) setSelectedTypes(draft.selectedTypes);
+      if (draft.selectedEmotions) setSelectedEmotions(draft.selectedEmotions);
+      if (draft.visibility) setVisibility(draft.visibility);
+      if (draft.memoTitle !== undefined) setMemoTitle(draft.memoTitle);
+      if (draft.event !== undefined) setEvent(draft.event);
+      if (draft.insight !== undefined) setInsight(draft.insight);
+      if (draft.lesson !== undefined) setLesson(draft.lesson);
+      if (draft.nextAction !== undefined) setNextAction(draft.nextAction);
+      if (draft.nextActionDone !== undefined) setNextActionDone(draft.nextActionDone);
+      if (draft.hesitation !== undefined) setHesitation(draft.hesitation);
+      if (draft.comparedOptions !== undefined) setComparedOptions(draft.comparedOptions);
+      if (draft.rejectedReason !== undefined) setRejectedReason(draft.rejectedReason);
+      if (draft.decisionCriteria !== undefined) setDecisionCriteria(draft.decisionCriteria);
+      if (draft.aiTodo !== undefined) setAiTodo(draft.aiTodo);
+      if (draft.dlabReading !== undefined) setDlabReading(draft.dlabReading);
+      if (draft.dlabVideo !== undefined) setDlabVideo(draft.dlabVideo);
+      if (draft.valueItem !== undefined) setValueItem(draft.valueItem);
+      if (draft.valueReflection !== undefined) setValueReflection(draft.valueReflection);
+      if (draft.date !== undefined) setDate(draft.date);
+    }
+  });
 
   const save = async () => {
     if (selectedTypes.length === 0) {
@@ -92,13 +166,23 @@ export function MemoFormScreen({
     if (result.error) {
       setError(result.error);
       setSaving(false);
+      return;
     }
+
+    await clearDraft();
+  };
+
+  const cancel = async () => {
+    await clearDraft();
+    onCancel();
   };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
       <ScreenShell title={screenTitle} subtitle={subtitle}>
         <View style={styles.form}>
+          <AutoSaveStatusText status={autoSaveStatus} />
+
           <FormSection title="基本情報" caption="あとから探しやすいように、分類と日付を整えます。">
             <Field label="分野">
               <Segmented options={domains} value={domain} onChange={setDomain} />
@@ -298,7 +382,7 @@ export function MemoFormScreen({
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.actions}>
-            <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={onCancel} style={styles.actionButton} />
+            <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={() => void cancel()} style={styles.actionButton} />
             <PrimaryButton disabled={saving} icon="checkmark-outline" label={saving ? "保存中" : submitLabel} onPress={save} style={styles.actionButton} />
           </View>
         </View>

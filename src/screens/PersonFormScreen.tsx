@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { AutoSaveStatusText } from "../components/AutoSaveStatusText";
 import { FormSection } from "../components/FormSection";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenShell } from "../components/ScreenShell";
+import { useAutoSavedDraft } from "../hooks/useAutoSavedDraft";
 import { colors, radii, spacing } from "../theme";
 import type { PersonDraft, PersonProfile } from "../types";
 
@@ -14,6 +16,20 @@ type PersonFormScreenProps = {
   submitLabel?: string;
   title?: string;
   subtitle?: string;
+};
+
+type PersonFormAutoSaveDraft = {
+  dislikes: string;
+  favoritePoints: string;
+  hobbies: string;
+  likes: string;
+  memo: string;
+  metAt: string;
+  metPlace: string;
+  name: string;
+  nickname: string;
+  relationship: string;
+  valuesNote: string;
 };
 
 export function PersonFormScreen({
@@ -37,6 +53,37 @@ export function PersonFormScreen({
   const [memo, setMemo] = useState(initialPerson?.memo ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoSaveKey = initialPerson ? `autosave.person.edit.${initialPerson.id}` : "autosave.person.create";
+  const { clearDraft, status: autoSaveStatus } = useAutoSavedDraft<PersonFormAutoSaveDraft>({
+    draft: {
+      dislikes,
+      favoritePoints,
+      hobbies,
+      likes,
+      memo,
+      metAt,
+      metPlace,
+      name,
+      nickname,
+      relationship,
+      valuesNote
+    },
+    enabled: !saving,
+    key: autoSaveKey,
+    onRestore: (draft) => {
+      if (draft.name !== undefined) setName(draft.name);
+      if (draft.nickname !== undefined) setNickname(draft.nickname);
+      if (draft.relationship !== undefined) setRelationship(draft.relationship);
+      if (draft.metAt !== undefined) setMetAt(draft.metAt);
+      if (draft.metPlace !== undefined) setMetPlace(draft.metPlace);
+      if (draft.hobbies !== undefined) setHobbies(draft.hobbies);
+      if (draft.likes !== undefined) setLikes(draft.likes);
+      if (draft.favoritePoints !== undefined) setFavoritePoints(draft.favoritePoints);
+      if (draft.dislikes !== undefined) setDislikes(draft.dislikes);
+      if (draft.valuesNote !== undefined) setValuesNote(draft.valuesNote);
+      if (draft.memo !== undefined) setMemo(draft.memo);
+    }
+  });
 
   const save = async () => {
     const trimmedName = name.trim();
@@ -67,13 +114,23 @@ export function PersonFormScreen({
     if (result.error) {
       setError(result.error);
       setSaving(false);
+      return;
     }
+
+    await clearDraft();
+  };
+
+  const cancel = async () => {
+    await clearDraft();
+    onCancel();
   };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
       <ScreenShell title={title} subtitle={subtitle}>
         <View style={styles.form}>
+          <AutoSaveStatusText status={autoSaveStatus} />
+
           <FormSection title="基本情報" caption="その人を思い出すための土台を残します。">
             <Field label="名前">
               <TextInput placeholder="例：山田 花子" placeholderTextColor={colors.textMuted} style={styles.input} value={name} onChangeText={setName} />
@@ -171,7 +228,7 @@ export function PersonFormScreen({
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.actions}>
-            <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={onCancel} style={styles.actionButton} />
+            <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={() => void cancel()} style={styles.actionButton} />
             <PrimaryButton disabled={saving} icon="checkmark-outline" label={saving ? "保存中" : submitLabel} onPress={save} style={styles.actionButton} />
           </View>
         </View>

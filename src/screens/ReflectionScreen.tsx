@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { AutoSaveStatusText } from "../components/AutoSaveStatusText";
 import { MemoCard } from "../components/MemoCard";
 import { Pill } from "../components/Pill";
 import { ScreenShell } from "../components/ScreenShell";
 import { Section } from "../components/Section";
+import { useAutoSavedDraft } from "../hooks/useAutoSavedDraft";
 import { colors, radii, spacing } from "../theme";
 import type { Memo, MemoKind, ReflectionRange, WeekStart } from "../types";
 
@@ -23,6 +25,18 @@ export function ReflectionScreen({ memos, onOpenMemo, weekStart }: ReflectionScr
     週: "",
     月: "",
     年: ""
+  });
+  const { status: autoSaveStatus } = useAutoSavedDraft<{ comments: Record<ReflectionRange, string>; range: ReflectionRange }>({
+    draft: { comments, range },
+    key: "autosave.reflection.comments",
+    onRestore: (draft) => {
+      if (draft.comments) {
+        setComments((current) => ({ ...current, ...draft.comments }));
+      }
+      if (draft.range) {
+        setRange(draft.range);
+      }
+    }
   });
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -104,6 +118,7 @@ export function ReflectionScreen({ memos, onOpenMemo, weekStart }: ReflectionScr
       </Section>
 
       <Section title="振り返りコメント">
+        <AutoSaveStatusText status={autoSaveStatus} />
         <TextInput
           multiline
           placeholder={`${range}の振り返りを書く`}
