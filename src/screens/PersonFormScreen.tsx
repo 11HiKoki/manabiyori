@@ -29,6 +29,7 @@ type PersonFormAutoSaveDraft = {
   name: string;
   nickname: string;
   relationship: string;
+  strengthFeedback: string;
   valuesNote: string;
 };
 
@@ -48,6 +49,7 @@ export function PersonFormScreen({
   const [hobbies, setHobbies] = useState(initialPerson?.hobbies ?? "");
   const [likes, setLikes] = useState(initialPerson?.likes ?? "");
   const [favoritePoints, setFavoritePoints] = useState(initialPerson?.favoritePoints ?? "");
+  const [strengthFeedback, setStrengthFeedback] = useState(initialPerson?.strengthFeedback ?? "");
   const [dislikes, setDislikes] = useState(initialPerson?.dislikes ?? "");
   const [valuesNote, setValuesNote] = useState(initialPerson?.valuesNote ?? "");
   const [memo, setMemo] = useState(initialPerson?.memo ?? "");
@@ -66,6 +68,7 @@ export function PersonFormScreen({
       name,
       nickname,
       relationship,
+      strengthFeedback,
       valuesNote
     },
     enabled: !saving,
@@ -79,6 +82,7 @@ export function PersonFormScreen({
       if (draft.hobbies !== undefined) setHobbies(draft.hobbies);
       if (draft.likes !== undefined) setLikes(draft.likes);
       if (draft.favoritePoints !== undefined) setFavoritePoints(draft.favoritePoints);
+      if (draft.strengthFeedback !== undefined) setStrengthFeedback(draft.strengthFeedback);
       if (draft.dislikes !== undefined) setDislikes(draft.dislikes);
       if (draft.valuesNote !== undefined) setValuesNote(draft.valuesNote);
       if (draft.memo !== undefined) setMemo(draft.memo);
@@ -105,6 +109,7 @@ export function PersonFormScreen({
       hobbies: hobbies.trim(),
       likes: likes.trim(),
       favoritePoints: favoritePoints.trim(),
+      strengthFeedback: strengthFeedback.trim(),
       dislikes: dislikes.trim(),
       valuesNote: valuesNote.trim(),
       nextTopic: initialPerson?.nextTopic ?? "",
@@ -184,6 +189,17 @@ export function PersonFormScreen({
                 style={[styles.input, styles.textAreaSmall]}
                 value={favoritePoints}
                 onChangeText={setFavoritePoints}
+              />
+            </Field>
+
+            <Field label="その人からもらった自分の強みフィードバック">
+              <TextInput
+                multiline
+                placeholder="その人に言ってもらえた自分の強み、うれしかった言葉"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={strengthFeedback}
+                onChangeText={setStrengthFeedback}
               />
             </Field>
           </FormSection>

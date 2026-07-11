@@ -55,6 +55,10 @@ create table if not exists public.memos (
   event text not null default '',
   insight text not null default '',
   lesson text not null default '',
+  supportive_note text not null default '',
+  success_journal text not null default '',
+  strength_feedback text not null default '',
+  strength_feedback_person_id uuid,
   next_action text not null default '',
   next_action_done boolean not null default false,
   hesitation text not null default '',
@@ -83,6 +87,10 @@ create index if not exists memos_types_gin_idx
 
 create index if not exists memos_user_visibility_idx
   on public.memos (user_id, visibility);
+
+create index if not exists memos_strength_feedback_person_idx
+  on public.memos (strength_feedback_person_id)
+  where strength_feedback_person_id is not null;
 
 drop trigger if exists set_memos_updated_at on public.memos;
 create trigger set_memos_updated_at
@@ -149,6 +157,7 @@ create table if not exists public.people (
   hobbies text not null default '',
   likes text not null default '',
   favorite_points text not null default '',
+  strength_feedback text not null default '',
   dislikes text not null default '',
   values_note text not null default '',
   next_topic text not null default '',
@@ -163,6 +172,23 @@ create index if not exists people_user_name_idx
 
 create index if not exists people_user_created_at_idx
   on public.people (user_id, created_at desc);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'memos_strength_feedback_person_id_fkey'
+      and conrelid = 'public.memos'::regclass
+  ) then
+    alter table public.memos
+      add constraint memos_strength_feedback_person_id_fkey
+      foreign key (strength_feedback_person_id)
+      references public.people(id)
+      on delete set null;
+  end if;
+end;
+$$;
 
 drop trigger if exists set_people_updated_at on public.people;
 create trigger set_people_updated_at
@@ -217,7 +243,18 @@ create policy "Users can insert own memos"
 on public.memos
 for insert
 to authenticated
-with check (auth.uid() = user_id);
+with check (
+  auth.uid() = user_id
+  and (
+    strength_feedback_person_id is null
+    or exists (
+      select 1
+      from public.people
+      where people.id = memos.strength_feedback_person_id
+        and people.user_id = auth.uid()
+    )
+  )
+);
 
 drop policy if exists "Users can update own memos" on public.memos;
 create policy "Users can update own memos"
@@ -225,7 +262,18 @@ on public.memos
 for update
 to authenticated
 using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+with check (
+  auth.uid() = user_id
+  and (
+    strength_feedback_person_id is null
+    or exists (
+      select 1
+      from public.people
+      where people.id = memos.strength_feedback_person_id
+        and people.user_id = auth.uid()
+    )
+  )
+);
 
 drop policy if exists "Users can delete own memos" on public.memos;
 create policy "Users can delete own memos"

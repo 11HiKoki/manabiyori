@@ -35,6 +35,7 @@ export function PeopleListScreen({ people, loading = false, error = null, onCrea
         person.hobbies,
         person.likes,
         person.favoritePoints,
+        person.strengthFeedback,
         person.dislikes,
         person.valuesNote,
         person.memo
@@ -102,7 +103,7 @@ function PersonCard({ person, onPress }: { person: PersonProfile; onPress: () =>
           </Text>
         ) : null}
         <Text style={styles.preview} numberOfLines={2}>
-          {person.favoritePoints || person.likes || person.valuesNote || person.memo || "その人らしさを残しておけます。"}
+          {person.favoritePoints || person.strengthFeedback || person.likes || person.valuesNote || person.memo || "その人らしさを残しておけます。"}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

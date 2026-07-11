@@ -7,13 +7,14 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenShell } from "../components/ScreenShell";
 import { useAutoSavedDraft } from "../hooks/useAutoSavedDraft";
 import { colors, radii, spacing } from "../theme";
-import type { Domain, Memo, MemoDraft, MemoKind } from "../types";
+import type { Domain, Memo, MemoDraft, MemoKind, PersonProfile } from "../types";
 import type { MemoVisibility } from "../supabase/types";
 
 type MemoFormScreenProps = {
   onSave: (memo: MemoDraft) => Promise<{ error?: string }>;
   onCancel: () => void;
   initialMemo?: Memo;
+  people?: PersonProfile[];
   submitLabel?: string;
   title?: string;
   subtitle?: string;
@@ -37,6 +38,10 @@ type MemoFormAutoSaveDraft = {
   rejectedReason: string;
   selectedEmotions: string[];
   selectedTypes: MemoKind[];
+  supportiveNote: string;
+  successJournal: string;
+  strengthFeedback: string;
+  strengthFeedbackPersonId: string | null;
   valueItem: string;
   valueReflection: string;
   visibility: MemoVisibility;
@@ -55,6 +60,7 @@ export function MemoFormScreen({
   onSave,
   onCancel,
   initialMemo,
+  people = [],
   submitLabel = "保存",
   title: screenTitle = "メモ登録",
   subtitle = "出来事を責めずに分解して、次の行動へつなげます。"
@@ -67,6 +73,10 @@ export function MemoFormScreen({
   const [event, setEvent] = useState(initialMemo?.event ?? "");
   const [insight, setInsight] = useState(initialMemo?.insight ?? "");
   const [lesson, setLesson] = useState(initialMemo?.lesson ?? "");
+  const [supportiveNote, setSupportiveNote] = useState(initialMemo?.supportiveNote ?? "");
+  const [successJournal, setSuccessJournal] = useState(initialMemo?.successJournal ?? "");
+  const [strengthFeedback, setStrengthFeedback] = useState(initialMemo?.strengthFeedback ?? "");
+  const [strengthFeedbackPersonId, setStrengthFeedbackPersonId] = useState<string | null>(initialMemo?.strengthFeedbackPersonId ?? null);
   const [nextAction, setNextAction] = useState(initialMemo?.nextAction ?? "");
   const [nextActionDone, setNextActionDone] = useState(initialMemo?.nextActionDone ?? false);
   const [hesitation, setHesitation] = useState(initialMemo?.hesitation ?? "");
@@ -101,6 +111,10 @@ export function MemoFormScreen({
       rejectedReason,
       selectedEmotions,
       selectedTypes,
+      supportiveNote,
+      successJournal,
+      strengthFeedback,
+      strengthFeedbackPersonId,
       valueItem,
       valueReflection,
       visibility
@@ -116,6 +130,10 @@ export function MemoFormScreen({
       if (draft.event !== undefined) setEvent(draft.event);
       if (draft.insight !== undefined) setInsight(draft.insight);
       if (draft.lesson !== undefined) setLesson(draft.lesson);
+      if (draft.supportiveNote !== undefined) setSupportiveNote(draft.supportiveNote);
+      if (draft.successJournal !== undefined) setSuccessJournal(draft.successJournal);
+      if (draft.strengthFeedback !== undefined) setStrengthFeedback(draft.strengthFeedback);
+      if (draft.strengthFeedbackPersonId !== undefined) setStrengthFeedbackPersonId(draft.strengthFeedbackPersonId);
       if (draft.nextAction !== undefined) setNextAction(draft.nextAction);
       if (draft.nextActionDone !== undefined) setNextActionDone(draft.nextActionDone);
       if (draft.hesitation !== undefined) setHesitation(draft.hesitation);
@@ -147,6 +165,10 @@ export function MemoFormScreen({
       event: event.trim() || "今日起きた出来事を短く記録しました。",
       insight: insight.trim() || "自分の反応や状況の見え方に変化がありました。",
       lesson: lesson.trim() || "次は少し早めに立ち止まるとよさそうです。",
+      supportiveNote: supportiveNote.trim(),
+      successJournal: successJournal.trim(),
+      strengthFeedback: strengthFeedback.trim(),
+      strengthFeedbackPersonId,
       nextAction: nextAction.trim() || "明日ひとつだけ試す行動を決める。",
       nextActionDone,
       hesitation: hesitation.trim(),
@@ -280,8 +302,51 @@ export function MemoFormScreen({
               />
             </Field>
 
+            <Field label="やさしい言葉・アドバイス">
+              <TextInput
+                multiline
+                placeholder="失敗した自分にかけたい言葉、次に向けたやさしい助言"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={supportiveNote}
+                onChangeText={setSupportiveNote}
+              />
+            </Field>
+
             <Field label="感情">
               <MultiSegmented options={emotions} values={selectedEmotions} onChange={setSelectedEmotions} wrap />
+            </Field>
+          </FormSection>
+
+          <FormSection title="一日の終わりの成功ジャーナル" caption="今日できたこと、うまくいったこと、小さな前進を残します。">
+            <Field label="成功ジャーナル">
+              <TextInput
+                multiline
+                placeholder="今日できたこと、うれしかったこと、小さく前に進んだこと"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={successJournal}
+                onChangeText={setSuccessJournal}
+              />
+            </Field>
+          </FormSection>
+
+          <FormSection title="もらった強みフィードバック" caption="他人から言われた自分の強みを、言ってくれた人と一緒に残します。">
+            {people.length > 0 ? (
+              <Field label="言ってくれた人">
+                <PersonSelector people={people} value={strengthFeedbackPersonId} onChange={setStrengthFeedbackPersonId} />
+              </Field>
+            ) : null}
+
+            <Field label="自分の強みフィードバック">
+              <TextInput
+                multiline
+                placeholder="例：説明がわかりやすい、安心して相談できると言ってもらえた"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={strengthFeedback}
+                onChangeText={setStrengthFeedback}
+              />
             </Field>
           </FormSection>
 
@@ -472,6 +537,49 @@ function MultiSegmented<T extends string>({
   );
 }
 
+function PersonSelector({
+  people,
+  value,
+  onChange
+}: {
+  people: PersonProfile[];
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) {
+  return (
+    <View style={[styles.segmented, styles.segmentedWrap]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ selected: value === null }}
+        onPress={() => onChange(null)}
+        style={({ pressed }) => [styles.segment, styles.segmentWrapItem, value === null ? styles.segmentActive : null, pressed ? styles.segmentPressed : null]}
+      >
+        <Text numberOfLines={2} style={[styles.segmentText, value === null ? styles.segmentTextActive : null]}>
+          未選択
+        </Text>
+      </Pressable>
+      {people.map((person) => {
+        const active = person.id === value;
+        const label = person.nickname ? `${person.name}（${person.nickname}）` : person.name;
+
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            key={person.id}
+            onPress={() => onChange(person.id)}
+            style={({ pressed }) => [styles.segment, styles.personSegment, active ? styles.segmentActive : null, pressed ? styles.segmentPressed : null]}
+          >
+            <Text numberOfLines={2} style={[styles.segmentText, active ? styles.segmentTextActive : null]}>
+              {label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 function VisibilitySegmented({ value, onChange }: { value: MemoVisibility; onChange: (value: MemoVisibility) => void }) {
   return (
     <View style={styles.segmented}>
@@ -600,6 +708,11 @@ const styles = StyleSheet.create({
   },
   segmentWrapItem: {
     minWidth: 120
+  },
+  personSegment: {
+    flexBasis: "46%",
+    flexGrow: 1,
+    minWidth: 132
   },
   segmentActive: {
     backgroundColor: colors.surface,

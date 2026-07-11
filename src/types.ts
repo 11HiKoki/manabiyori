@@ -28,6 +28,10 @@ export type Memo = {
   event: string;
   insight: string;
   lesson: string;
+  supportiveNote: string;
+  successJournal: string;
+  strengthFeedback: string;
+  strengthFeedbackPersonId: string | null;
   nextAction: string;
   nextActionDone: boolean;
   hesitation: string;
@@ -57,6 +61,7 @@ export type PersonProfile = {
   hobbies: string;
   likes: string;
   favoritePoints: string;
+  strengthFeedback: string;
   dislikes: string;
   valuesNote: string;
   nextTopic: string;

@@ -18,6 +18,10 @@ export type Database = {
           event: string;
           insight: string;
           lesson: string;
+          supportive_note: string;
+          success_journal: string;
+          strength_feedback: string;
+          strength_feedback_person_id: string | null;
           next_action: string;
           next_action_done: boolean;
           hesitation: string;
@@ -44,6 +48,10 @@ export type Database = {
           event?: string;
           insight?: string;
           lesson?: string;
+          supportive_note?: string;
+          success_journal?: string;
+          strength_feedback?: string;
+          strength_feedback_person_id?: string | null;
           next_action?: string;
           next_action_done?: boolean;
           hesitation?: string;
@@ -70,6 +78,10 @@ export type Database = {
           event?: string;
           insight?: string;
           lesson?: string;
+          supportive_note?: string;
+          success_journal?: string;
+          strength_feedback?: string;
+          strength_feedback_person_id?: string | null;
           next_action?: string;
           next_action_done?: boolean;
           hesitation?: string;
@@ -92,6 +104,12 @@ export type Database = {
             foreignKeyName: "memos_user_id_fkey";
             columns: ["user_id"];
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "memos_strength_feedback_person_id_fkey";
+            columns: ["strength_feedback_person_id"];
+            referencedRelation: "people";
             referencedColumns: ["id"];
           }
         ];
@@ -207,6 +225,7 @@ export type Database = {
           hobbies: string;
           likes: string;
           favorite_points: string;
+          strength_feedback: string;
           dislikes: string;
           values_note: string;
           next_topic: string;
@@ -225,6 +244,7 @@ export type Database = {
           hobbies?: string;
           likes?: string;
           favorite_points?: string;
+          strength_feedback?: string;
           dislikes?: string;
           values_note?: string;
           next_topic?: string;
@@ -243,6 +263,7 @@ export type Database = {
           hobbies?: string;
           likes?: string;
           favorite_points?: string;
+          strength_feedback?: string;
           dislikes?: string;
           values_note?: string;
           next_topic?: string;

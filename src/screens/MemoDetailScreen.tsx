@@ -7,23 +7,26 @@ import { Pill, domainTone, kindTone } from "../components/Pill";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenShell } from "../components/ScreenShell";
 import { colors, radii, spacing } from "../theme";
-import type { Memo } from "../types";
+import type { Memo, PersonProfile } from "../types";
 
 type MemoDetailScreenProps = {
   memo: Memo;
+  people?: PersonProfile[];
   onBack: () => void;
   onCreate: () => void;
   onEdit: () => void;
   onDelete: () => Promise<{ error?: string }>;
 };
 
-export function MemoDetailScreen({ memo, onBack, onCreate, onEdit, onDelete }: MemoDetailScreenProps) {
+export function MemoDetailScreen({ memo, people = [], onBack, onCreate, onEdit, onDelete }: MemoDetailScreenProps) {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const hasThoughts = Boolean(memo.hesitation || memo.comparedOptions || memo.rejectedReason || memo.decisionCriteria);
   const hasValues = Boolean(memo.valueItem || memo.valueReflection);
   const hasLearningQueue = Boolean(memo.aiTodo || memo.dlabReading || memo.dlabVideo);
+  const hasEndOfDayNotes = Boolean(memo.successJournal || memo.strengthFeedback);
+  const strengthFeedbackPerson = people.find((person) => person.id === memo.strengthFeedbackPersonId);
 
   const deleteMemo = async () => {
     setDeleting(true);
@@ -80,6 +83,7 @@ export function MemoDetailScreen({ memo, onBack, onCreate, onEdit, onDelete }: M
           <DetailBlock title="出来事" body={memo.event} />
           <DetailBlock title="気づき" body={memo.insight} />
           <DetailBlock title="教訓" body={memo.lesson} />
+          <DetailBlock title="やさしい言葉・アドバイス" body={memo.supportiveNote} />
         </View>
       </View>
 
@@ -90,6 +94,17 @@ export function MemoDetailScreen({ memo, onBack, onCreate, onEdit, onDelete }: M
             <DetailBlock title="AIでやりたいこと" body={memo.aiTodo} />
             <DetailBlock title="Dラボで読みたい記事" body={memo.dlabReading} />
             <DetailBlock title="Dラボで観たい動画" body={memo.dlabVideo} />
+          </View>
+        </View>
+      ) : null}
+
+      {hasEndOfDayNotes ? (
+        <View style={styles.detailSection}>
+          <Text style={styles.sectionTitle}>一日の終わりの記録</Text>
+          <View style={styles.detailPanel}>
+            <DetailBlock title="成功ジャーナル" body={memo.successJournal} />
+            <DetailBlock title="言ってくれた人" body={strengthFeedbackPerson?.name ?? ""} />
+            <DetailBlock title="自分の強みフィードバック" body={memo.strengthFeedback} />
           </View>
         </View>
       ) : null}

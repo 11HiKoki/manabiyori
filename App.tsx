@@ -545,13 +545,14 @@ export default function App() {
       case "home":
         return <HomeScreen memos={memos} onNavigate={navigate} onOpenMemo={openMemo} />;
       case "create":
-        return <MemoFormScreen onSave={addMemo} onCancel={() => navigate("home")} />;
+        return <MemoFormScreen people={people} onSave={addMemo} onCancel={() => navigate("home")} />;
       case "edit":
         return selectedMemo ? (
           <MemoFormScreen
             initialMemo={selectedMemo}
             onCancel={() => navigate("detail")}
             onSave={editMemo}
+            people={people}
             submitLabel="更新"
             subtitle="残したメモを今の言葉に整えます。"
             title="メモ編集"
@@ -591,6 +592,7 @@ export default function App() {
             onCreate={() => navigate("create")}
             onDelete={removeMemo}
             onEdit={() => navigate("edit")}
+            people={people}
           />
         ) : (
           <MemoListScreen
@@ -669,6 +671,7 @@ export default function App() {
               }
             }}
             person={selectedPerson}
+            strengthFeedbackMemos={memos.filter((memo) => memo.strengthFeedbackPersonId === selectedPerson.id && memo.strengthFeedback.trim())}
           />
         ) : (
           <PeopleListScreen

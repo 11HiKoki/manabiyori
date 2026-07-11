@@ -5,11 +5,12 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "rea
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenShell } from "../components/ScreenShell";
 import { colors, radii, spacing } from "../theme";
-import type { ConversationNote, PersonProfile } from "../types";
+import type { ConversationNote, Memo, PersonProfile } from "../types";
 
 type PersonDetailScreenProps = {
   person: PersonProfile;
   conversationNotes: ConversationNote[];
+  strengthFeedbackMemos?: Memo[];
   conversationNotesLoading?: boolean;
   conversationNotesError?: string | null;
   onBack: () => void;
@@ -25,6 +26,7 @@ type PersonDetailScreenProps = {
 export function PersonDetailScreen({
   person,
   conversationNotes,
+  strengthFeedbackMemos = [],
   conversationNotesLoading = false,
   conversationNotesError = null,
   onBack,
@@ -117,11 +119,23 @@ export function PersonDetailScreen({
           <DetailBlock title="趣味" body={person.hobbies} />
           <DetailBlock title="好きなもの" body={person.likes} />
           <DetailBlock title="好きなところ・尊敬できるところ・素敵なところ" body={person.favoritePoints} />
+          <DetailBlock title="その人からもらった自分の強みフィードバック" body={person.strengthFeedback} />
           <DetailBlock title="苦手そうなもの・配慮したいこと" body={person.dislikes} />
           <DetailBlock title="大事にしていそうなこと" body={person.valuesNote} />
           <DetailBlock title="自由メモ" body={person.memo} />
         </View>
       </View>
+
+      {strengthFeedbackMemos.length > 0 ? (
+        <View style={styles.detailSection}>
+          <Text style={styles.sectionTitle}>メモからの強みフィードバック</Text>
+          <View style={styles.feedbackStack}>
+            {strengthFeedbackMemos.map((memo) => (
+              <StrengthFeedbackCard key={memo.id} memo={memo} />
+            ))}
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.conversationPanel}>
         <View style={styles.conversationHeader}>
@@ -256,6 +270,16 @@ function DetailBlock({ title, body, highlight = false }: { title: string; body: 
     <View style={highlight ? styles.highlightBlock : styles.block}>
       <Text style={styles.blockTitle}>{title}</Text>
       <Text style={styles.blockBody}>{body || "未入力"}</Text>
+    </View>
+  );
+}
+
+function StrengthFeedbackCard({ memo }: { memo: Memo }) {
+  return (
+    <View style={styles.feedbackCard}>
+      <Text style={styles.feedbackDate}>{memo.date}</Text>
+      <Text style={styles.feedbackTitle}>{memo.title}</Text>
+      <Text style={styles.feedbackBody}>{memo.strengthFeedback}</Text>
     </View>
   );
 }
@@ -433,6 +457,33 @@ const styles = StyleSheet.create({
   },
   conversationPanel: {
     gap: spacing.lg
+  },
+  feedbackStack: {
+    gap: spacing.md
+  },
+  feedbackCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.lg
+  },
+  feedbackDate: {
+    color: colors.accentDark,
+    fontSize: 12,
+    fontWeight: "900"
+  },
+  feedbackTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: 21
+  },
+  feedbackBody: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 22
   },
   conversationHeader: {
     alignItems: "stretch",
