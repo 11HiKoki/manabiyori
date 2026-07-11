@@ -116,7 +116,7 @@ export function PersonDetailScreen({
           <DetailBlock title="出会った場所" body={person.metPlace} />
           <DetailBlock title="趣味" body={person.hobbies} />
           <DetailBlock title="好きなもの" body={person.likes} />
-          <DetailBlock title="その人の好きなところ" body={person.favoritePoints} />
+          <DetailBlock title="好きなところ・尊敬できるところ・素敵なところ" body={person.favoritePoints} />
           <DetailBlock title="苦手そうなもの・配慮したいこと" body={person.dislikes} />
           <DetailBlock title="大事にしていそうなこと" body={person.valuesNote} />
           <DetailBlock title="自由メモ" body={person.memo} />

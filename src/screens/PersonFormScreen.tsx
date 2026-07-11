@@ -153,7 +153,7 @@ export function PersonFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="好み・趣味" caption="好きなものと、その人自身の好きなところを分けて残します。">
+          <FormSection title="好み・趣味" caption="好きなものと、その人自身の魅力を分けて残します。">
             <Field label="趣味">
               <TextInput
                 multiline
@@ -176,10 +176,10 @@ export function PersonFormScreen({
               />
             </Field>
 
-            <Field label="その人の好きなところ">
+            <Field label="好きなところ・尊敬できるところ・素敵なところ">
               <TextInput
                 multiline
-                placeholder="魅力に感じるところ、尊敬しているところ、いいなと思ったところ"
+                placeholder="好きなところ、尊敬できるところ、素敵だと思ったところ"
                 placeholderTextColor={colors.textMuted}
                 style={[styles.input, styles.textAreaSmall]}
                 value={favoritePoints}
