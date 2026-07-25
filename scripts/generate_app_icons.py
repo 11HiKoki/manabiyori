@@ -13,7 +13,7 @@ TEXT = "#26332F"
 GREEN = "#6F8F7B"
 GREEN_DARK = "#4F705D"
 AMBER = "#C49A55"
-LAVENDER = "#8E7A9E"
+PAGE_SHADOW = "#EDE3D6"
 
 
 def scaled_box(box, scale):
@@ -41,32 +41,34 @@ def draw_mark(image, scale=1.0):
 
     shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow)
-    shadow_draw.rounded_rectangle(box((238, 358, 786, 704)), radius=p(64), fill=(42, 33, 24, 28))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(p(18)))
+    shadow_draw.rounded_rectangle(box((164, 222, 860, 842)), radius=p(150), fill=(42, 33, 24, 30))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(p(22)))
     image.alpha_composite(shadow)
 
-    draw.rounded_rectangle(box((234, 338, 790, 684)), radius=p(68), fill=SURFACE, outline=BORDER, width=p(12))
-    draw.rounded_rectangle(box((276, 382, 512, 638)), radius=p(42), fill="#FFFFFF", outline=BORDER, width=p(10))
-    draw.rounded_rectangle(box((512, 382, 748, 638)), radius=p(42), fill="#FFFFFF", outline=BORDER, width=p(10))
-    draw.line(box((512, 390, 512, 640)), fill=BORDER, width=p(9))
-    draw.arc(box((330, 438, 496, 610)), start=196, end=338, fill=GREEN, width=p(12))
-    draw.arc(box((528, 438, 694, 610)), start=202, end=344, fill=GREEN, width=p(12))
+    draw.rounded_rectangle(box((150, 194, 874, 818)), radius=p(154), fill=SURFACE, outline=BORDER, width=p(18))
 
-    draw.line(box((512, 418, 512, 264)), fill=GREEN_DARK, width=p(22))
-    draw_leaf(image, (p(456), p(315)), (p(98), p(54)), -28, GREEN)
-    draw_leaf(image, (p(576), p(315)), (p(98), p(54)), 28, GREEN)
+    # A bold open-book shape. It stays legible at launcher and favicon sizes.
+    draw.rounded_rectangle(box((224, 390, 498, 704)), radius=p(72), fill="#FFFFFF", outline=BORDER, width=p(16))
+    draw.rounded_rectangle(box((526, 390, 800, 704)), radius=p(72), fill="#FFFFFF", outline=BORDER, width=p(16))
+    draw.rectangle(box((486, 392, 538, 724)), fill=SURFACE)
+    draw.line(box((512, 384, 512, 716)), fill=PAGE_SHADOW, width=p(18))
+    draw.arc(box((302, 476, 466, 620)), start=200, end=340, fill=GREEN, width=p(22))
+    draw.arc(box((558, 476, 722, 620)), start=200, end=340, fill=GREEN, width=p(22))
 
-    draw.ellipse(box((664, 206, 746, 288)), fill="#F2E4C9", outline=AMBER, width=p(10))
-    draw.line(box((705, 174, 705, 198)), fill=AMBER, width=p(8))
-    draw.line(box((705, 296, 705, 320)), fill=AMBER, width=p(8))
-    draw.line(box((632, 247, 656, 247)), fill=AMBER, width=p(8))
-    draw.line(box((754, 247, 778, 247)), fill=AMBER, width=p(8))
+    # Sprout for growth and learning.
+    draw.rounded_rectangle(box((484, 270, 540, 432)), radius=p(26), fill=GREEN_DARK)
+    draw_leaf(image, (p(436), p(322)), (p(122), p(68)), -25, GREEN)
+    draw_leaf(image, (p(588), p(322)), (p(122), p(68)), 25, GREEN)
 
-    draw.rounded_rectangle(box((376, 716, 648, 754)), radius=p(20), fill="#DCE8D8")
-    draw.ellipse(box((348, 234, 376, 262)), fill=LAVENDER)
-    draw.ellipse(box((618, 694, 642, 718)), fill=AMBER)
-    draw.ellipse(box((434, 694, 456, 716)), fill=GREEN)
-    draw.line(box((388, 754, 636, 754)), fill=TEXT, width=p(8))
+    # Small sun, simplified so it does not turn noisy when scaled down.
+    draw.ellipse(box((664, 230, 746, 312)), fill="#F2E4C9", outline=AMBER, width=p(14))
+    draw.line(box((706, 196, 706, 222)), fill=AMBER, width=p(10))
+    draw.line(box((706, 320, 706, 346)), fill=AMBER, width=p(10))
+    draw.line(box((630, 272, 656, 272)), fill=AMBER, width=p(10))
+    draw.line(box((754, 272, 780, 272)), fill=AMBER, width=p(10))
+
+    draw.rounded_rectangle(box((354, 748, 670, 792)), radius=p(22), fill="#DCE8D8")
+    draw.line(box((394, 792, 630, 792)), fill=TEXT, width=p(12))
 
 
 def create_icon(path, size=1024, transparent=False):
@@ -80,8 +82,8 @@ def main():
     create_icon(ASSETS / "icon.png", 1024, transparent=False)
     create_icon(ASSETS / "adaptive-icon.png", 1024, transparent=True)
     icon = Image.open(ASSETS / "icon.png")
-    icon.crop((156, 132, 868, 844)).resize((256, 256), Image.Resampling.LANCZOS).save(ASSETS / "brand-icon.png")
-    icon.resize((48, 48), Image.Resampling.LANCZOS).save(ASSETS / "favicon.png")
+    icon.crop((108, 148, 916, 884)).resize((256, 256), Image.Resampling.LANCZOS).save(ASSETS / "brand-icon.png")
+    Image.open(ASSETS / "brand-icon.png").resize((48, 48), Image.Resampling.LANCZOS).save(ASSETS / "favicon.png")
 
 
 if __name__ == "__main__":
