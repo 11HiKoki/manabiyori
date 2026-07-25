@@ -12,7 +12,7 @@
 
 - Supabase Auth による新規登録、ログイン、ログアウト
 - 通常メモの登録、一覧、詳細、編集、削除
-- 種別と感情の複数選択
+- 種別と感情の複数選択（気づき、学び、失敗、教訓、好奇心）
 - 週・月・年の振り返り
 - 週の開始日設定（月曜日 / 日曜日）
 - 人物プロフィールの登録、一覧、詳細、編集、削除
@@ -36,6 +36,8 @@ npm install
 Supabase 側では `supabase/schema.sql` を実行して、必要なテーブルとRLSポリシーを作成します。
 
 既存DBで `memos.type` / `memos.emotion` から `memos.types` / `memos.emotions` へ移行する場合は、`supabase/alter_memos_types_emotions.sql` を使います。
+
+既存DBへ「好奇心」ジャンルを追加する場合は、`supabase/alter_add_curiosity_memo_type.sql` を実行します。
 
 ## .env の設定方法
 

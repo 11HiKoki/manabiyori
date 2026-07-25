@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { colors, radii, spacing } from "../theme";
 
-type PillTone = "work" | "private" | "insight" | "learning" | "failure" | "lesson" | "neutral";
+type PillTone = "work" | "private" | "insight" | "learning" | "failure" | "lesson" | "curiosity" | "neutral";
 
 type PillProps = {
   label: string;
@@ -16,6 +16,7 @@ const toneStyles: Record<PillTone, { backgroundColor: string; color: string }> =
   learning: { backgroundColor: colors.blueSoft, color: colors.blue },
   failure: { backgroundColor: colors.dangerSoft, color: colors.coral },
   lesson: { backgroundColor: colors.amberSoft, color: colors.amber },
+  curiosity: { backgroundColor: colors.lavenderSoft, color: colors.lavender },
   neutral: { backgroundColor: colors.surfaceMuted, color: colors.textMuted }
 };
 
@@ -45,6 +46,8 @@ export function kindTone(kind: string): PillTone {
       return "failure";
     case "教訓":
       return "lesson";
+    case "好奇心":
+      return "curiosity";
     default:
       return "neutral";
   }

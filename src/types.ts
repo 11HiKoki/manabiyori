@@ -1,7 +1,7 @@
 import type { MemoVisibility } from "./supabase/types";
 
 export type Domain = "仕事" | "プライベート";
-export type MemoKind = "気づき" | "学び" | "失敗" | "教訓";
+export type MemoKind = "気づき" | "学び" | "失敗" | "教訓" | "好奇心";
 export type WeekStart = "monday" | "sunday";
 export type AppRoute =
   | "login"

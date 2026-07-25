@@ -48,7 +48,7 @@ type MemoFormAutoSaveDraft = {
 };
 
 const domains: Domain[] = ["仕事", "プライベート"];
-const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓"];
+const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓", "好奇心"];
 const emotions = ["安心", "焦り", "納得", "反省", "前向き", "もやもや"];
 const visibilityOptions: Array<{ label: string; value: MemoVisibility }> = [
   { label: "自分だけ", value: "private" },
@@ -199,6 +199,12 @@ export function MemoFormScreen({
     onCancel();
   };
 
+  const collapseLearningQueue = !initialMemo?.aiTodo && !initialMemo?.dlabReading && !initialMemo?.dlabVideo;
+  const collapseEndOfDay = !initialMemo?.successJournal;
+  const collapseStrengthFeedback = !initialMemo?.strengthFeedback && !initialMemo?.strengthFeedbackPersonId;
+  const collapseThoughts = !initialMemo?.hesitation && !initialMemo?.comparedOptions && !initialMemo?.rejectedReason && !initialMemo?.decisionCriteria;
+  const collapseValues = !initialMemo?.valueItem && !initialMemo?.valueReflection;
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
       <ScreenShell title={screenTitle} subtitle={subtitle}>
@@ -230,41 +236,6 @@ export function MemoFormScreen({
 
             <Field label="公開範囲">
               <VisibilitySegmented value={visibility} onChange={setVisibility} />
-            </Field>
-          </FormSection>
-
-          <FormSection title="AI・Dラボメモ" caption="試したいAI活用や、Dラボで読みたい記事・観たい動画を残します。">
-            <Field label="AIでやりたいこと">
-              <TextInput
-                multiline
-                placeholder="AIで試したいこと、作りたいもの、相談したいこと"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.textAreaSmall]}
-                value={aiTodo}
-                onChangeText={setAiTodo}
-              />
-            </Field>
-
-            <Field label="Dラボで読みたい記事">
-              <TextInput
-                multiline
-                placeholder="読みたい記事、あとで調べたいテーマ"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.textAreaSmall]}
-                value={dlabReading}
-                onChangeText={setDlabReading}
-              />
-            </Field>
-
-            <Field label="Dラボで観たい動画">
-              <TextInput
-                multiline
-                placeholder="観たい動画、あとで見返したい内容"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.textAreaSmall]}
-                value={dlabVideo}
-                onChangeText={setDlabVideo}
-              />
             </Field>
           </FormSection>
 
@@ -318,7 +289,13 @@ export function MemoFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="一日の終わりの成功ジャーナル" caption="今日できたこと、うまくいったこと、小さな前進を残します。">
+          <FormSection
+            badge="任意"
+            collapsible
+            defaultCollapsed={collapseEndOfDay}
+            title="一日の終わりの成功ジャーナル"
+            caption="今日できたこと、うまくいったこと、小さな前進を残します。"
+          >
             <Field label="成功ジャーナル">
               <TextInput
                 multiline
@@ -331,7 +308,13 @@ export function MemoFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="もらった強みフィードバック" caption="他人から言われた自分の強みを、言ってくれた人と一緒に残します。">
+          <FormSection
+            badge="任意"
+            collapsible
+            defaultCollapsed={collapseStrengthFeedback}
+            title="もらった強みフィードバック"
+            caption="他人から言われた自分の強みを、言ってくれた人と一緒に残します。"
+          >
             {people.length > 0 ? (
               <Field label="言ってくれた人">
                 <PersonSelector people={people} value={strengthFeedbackPersonId} onChange={setStrengthFeedbackPersonId} />
@@ -350,7 +333,13 @@ export function MemoFormScreen({
             </Field>
           </FormSection>
 
-          <FormSection title="思考の途中経過" caption="迷い、比較、捨てた案も未来の判断材料になります。">
+          <FormSection
+            badge="深掘り"
+            collapsible
+            defaultCollapsed={collapseThoughts}
+            title="思考の途中経過"
+            caption="迷い、比較、捨てた案も未来の判断材料になります。"
+          >
             <Field label="何に迷ったか">
               <TextInput
                 multiline
@@ -421,7 +410,13 @@ export function MemoFormScreen({
             </Pressable>
           </FormSection>
 
-          <FormSection title="価値観・信念に沿った行動" caption="その日に大切にしたい軸と、そこから見えたことを残します。">
+          <FormSection
+            badge="任意"
+            collapsible
+            defaultCollapsed={collapseValues}
+            title="価値観・信念に沿った行動"
+            caption="その日に大切にしたい軸と、そこから見えたことを残します。"
+          >
             <Field label="選んだ項目">
               <TextInput
                 placeholder="例：誠実に早めに伝える"
@@ -440,6 +435,47 @@ export function MemoFormScreen({
                 style={[styles.input, styles.textAreaSmall]}
                 value={valueReflection}
                 onChangeText={setValueReflection}
+              />
+            </Field>
+          </FormSection>
+
+          <FormSection
+            badge="任意"
+            collapsible
+            defaultCollapsed={collapseLearningQueue}
+            title="AI・Dラボメモ"
+            caption="試したいAI活用や、Dラボで読みたい記事・観たい動画を残します。"
+          >
+            <Field label="AIでやりたいこと">
+              <TextInput
+                multiline
+                placeholder="AIで試したいこと、作りたいもの、相談したいこと"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={aiTodo}
+                onChangeText={setAiTodo}
+              />
+            </Field>
+
+            <Field label="Dラボで読みたい記事">
+              <TextInput
+                multiline
+                placeholder="読みたい記事、あとで調べたいテーマ"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={dlabReading}
+                onChangeText={setDlabReading}
+              />
+            </Field>
+
+            <Field label="Dラボで観たい動画">
+              <TextInput
+                multiline
+                placeholder="観たい動画、あとで見返したい内容"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.textAreaSmall]}
+                value={dlabVideo}
+                onChangeText={setDlabVideo}
               />
             </Field>
           </FormSection>

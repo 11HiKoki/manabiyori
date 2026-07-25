@@ -17,7 +17,7 @@ type ReflectionScreenProps = {
 };
 
 const ranges: ReflectionRange[] = ["週", "月", "年"];
-const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓"];
+const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓", "好奇心"];
 
 export function ReflectionScreen({ memos, onOpenMemo, weekStart }: ReflectionScreenProps) {
   const [range, setRange] = useState<ReflectionRange>("週");

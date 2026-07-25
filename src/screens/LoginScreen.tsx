@@ -1,7 +1,7 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 
+import appIcon from "../../assets/brand-icon.png";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { colors, radii, shadows, spacing } from "../theme";
 
@@ -42,7 +42,7 @@ export function LoginScreen({ onSignIn, onSignUp }: LoginScreenProps) {
       <View style={styles.content}>
         <View style={styles.brand}>
           <View style={styles.logo}>
-            <Ionicons name="leaf-outline" size={30} color={colors.accentDark} />
+            <Image source={appIcon} style={styles.logoImage} />
           </View>
           <Text style={styles.appName}>まなびより</Text>
           <Text style={styles.tagline}>気づきと人との記録帳</Text>
@@ -102,16 +102,17 @@ export function LoginScreen({ onSignIn, onSignUp }: LoginScreenProps) {
 
 const styles = StyleSheet.create({
   safe: {
+    alignItems: "center",
     flex: 1,
     backgroundColor: colors.background
   },
   content: {
-    alignSelf: "center",
+    boxSizing: "border-box",
     flex: 1,
     justifyContent: "center",
     gap: spacing.xxl,
-    maxWidth: 560,
-    padding: spacing.xl
+    padding: spacing.xl,
+    width: "100%"
   },
   brand: {
     alignItems: "center",
@@ -127,6 +128,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 58
   },
+  logoImage: {
+    borderRadius: 8,
+    height: 58,
+    width: 58
+  },
   appName: {
     color: colors.text,
     fontSize: 32,
@@ -137,12 +143,16 @@ const styles = StyleSheet.create({
     fontSize: 15
   },
   panel: {
+    alignSelf: "center",
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: radii.md,
     borderWidth: 1,
+    boxSizing: "border-box",
     gap: spacing.xl,
+    maxWidth: "88%",
     padding: spacing.xl,
+    width: 342,
     ...shadows.soft
   },
   panelHeader: {

@@ -16,14 +16,16 @@ const kindToType: Record<MemoKind, MemoType> = {
   気づき: "insight",
   学び: "learning",
   失敗: "failure",
-  教訓: "lesson"
+  教訓: "lesson",
+  好奇心: "curiosity"
 };
 
 const typeToKind: Record<MemoType, MemoKind> = {
   insight: "気づき",
   learning: "学び",
   failure: "失敗",
-  lesson: "教訓"
+  lesson: "教訓",
+  curiosity: "好奇心"
 };
 
 export function memoRowToMemo(row: MemoRow): Memo {

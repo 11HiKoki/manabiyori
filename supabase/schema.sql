@@ -13,7 +13,7 @@ $$;
 
 do $$
 begin
-  create type public.memo_type as enum ('insight', 'learning', 'failure', 'lesson');
+  create type public.memo_type as enum ('insight', 'learning', 'failure', 'lesson', 'curiosity');
 exception
   when duplicate_object then null;
 end;

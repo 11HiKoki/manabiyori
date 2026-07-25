@@ -14,20 +14,24 @@ type HomeScreenProps = {
   onOpenMemo: (memoId: string) => void;
 };
 
-const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓"];
+const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓", "好奇心"];
 
 export function HomeScreen({ memos, onNavigate, onOpenMemo }: HomeScreenProps) {
-  const weeklyMemos = memos.filter((memo) => memo.date >= "2026-06-29");
+  const weekStart = getWeekStartDate(new Date());
+  const weeklyMemos = memos.filter((memo) => parseMemoDate(memo.date) >= weekStart);
   const openActions = memos.filter((memo) => !memo.nextActionDone);
   const topTag = getTopTag(memos);
+  const hasMemos = memos.length > 0;
 
   return (
     <ScreenShell title="ホーム" subtitle="最近の気づきを見渡して、次の小さな行動を選びます。">
       <View style={styles.hero}>
         <View style={styles.heroCopy}>
-          <Text style={styles.heroLabel}>最近の記録</Text>
-          <Text style={styles.heroTitle}>今週も、よく観察できています。</Text>
-          <Text style={styles.heroText}>失敗も学びも同じ場所に置いて、次の一歩だけ決めていきましょう。</Text>
+          <Text style={styles.heroLabel}>{hasMemos ? "最近の記録" : "はじめの記録"}</Text>
+          <Text style={styles.heroTitle}>{hasMemos ? "今週も、よく観察できています。" : "今日の小さな発見を、そっと残しましょう。"}</Text>
+          <Text style={styles.heroText}>
+            {hasMemos ? "失敗も学びも同じ場所に置いて、次の一歩だけ決めていきましょう。" : "うまく言葉にならなくても大丈夫です。まずは一つの出来事から始められます。"}
+          </Text>
         </View>
         <PrimaryButton icon="create-outline" label="メモを書く" onPress={() => onNavigate("create")} />
       </View>
@@ -115,6 +119,19 @@ function getTopTag(memos: Memo[]) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "記録";
 }
 
+function parseMemoDate(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getWeekStartDate(date: Date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const day = start.getDay();
+  start.setDate(start.getDate() + (day === 0 ? -6 : 1 - day));
+  return start;
+}
+
 const styles = StyleSheet.create({
   hero: {
     backgroundColor: colors.surface,
@@ -171,6 +188,7 @@ const styles = StyleSheet.create({
   },
   kindGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm
   },
   kindItem: {
@@ -179,8 +197,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radii.md,
     borderWidth: 1,
-    flex: 1,
+    flexBasis: "30%",
+    flexGrow: 1,
     gap: spacing.xs,
+    minWidth: 96,
     padding: spacing.md
   },
   kindCount: {

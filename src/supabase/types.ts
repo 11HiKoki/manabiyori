@@ -1,7 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type MemoField = "work" | "private";
-export type MemoType = "insight" | "learning" | "failure" | "lesson";
+export type MemoType = "insight" | "learning" | "failure" | "lesson" | "curiosity";
 export type MemoVisibility = "private" | "friends" | "public";
 export type ReflectionPeriodType = "week" | "month" | "year";
 
@@ -390,11 +390,12 @@ export const memoFieldLabels: Record<MemoField, "仕事" | "プライベート">
   private: "プライベート"
 };
 
-export const memoTypeLabels: Record<MemoType, "気づき" | "学び" | "失敗" | "教訓"> = {
+export const memoTypeLabels: Record<MemoType, "気づき" | "学び" | "失敗" | "教訓" | "好奇心"> = {
   insight: "気づき",
   learning: "学び",
   failure: "失敗",
-  lesson: "教訓"
+  lesson: "教訓",
+  curiosity: "好奇心"
 };
 
 export const reflectionPeriodLabels: Record<ReflectionPeriodType, "週" | "月" | "年"> = {
