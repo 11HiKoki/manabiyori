@@ -49,9 +49,8 @@ const allRoutes: AppRoute[] = [
   "settings"
 ];
 const conversationRoutes: AppRoute[] = ["personDetail", "conversationCreate", "conversationEdit"];
-const AUTH_TIMEOUT_MS = 10000;
-const AUTH_ACTION_TIMEOUT_MS = 20000;
-const FONT_TIMEOUT_MS = 6000;
+const AUTH_FALLBACK_MS = 700;
+const AUTH_ACTION_TIMEOUT_MS = 15000;
 
 type BrowserNavigationState = {
   conversationNoteId?: string;
@@ -61,8 +60,7 @@ type BrowserNavigationState = {
 };
 
 export default function App() {
-  const [fontsLoaded, fontError] = useFonts(Ionicons.font);
-  const [fontLoadingTimedOut, setFontLoadingTimedOut] = useState(false);
+  useFonts(Ionicons.font);
   const [route, setRoute] = useState<AppRoute>("login");
   const [memos, setMemos] = useState<Memo[]>([]);
   const [selectedMemoId, setSelectedMemoId] = useState("");
@@ -118,35 +116,31 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<"timeout">((resolve) => {
-      timeoutId = setTimeout(() => {
-        resolve("timeout");
-      }, AUTH_TIMEOUT_MS);
-    });
+    let sessionCheckSettled = false;
+    const timeoutId = setTimeout(() => {
+      if (!mounted || sessionCheckSettled) {
+        return;
+      }
 
-    Promise.race([supabase.auth.getSession(), timeout])
-      .then((result) => {
+      setAuthError("認証状態の確認に時間がかかっています。画面を先に表示しています。");
+      applyNavigationState({ route: passwordRecoveryDetectedRef.current || isPasswordRecoveryUrl() ? "passwordReset" : "login" }, "replace");
+      setAuthLoading(false);
+    }, AUTH_FALLBACK_MS);
+
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
         if (!mounted) {
           return;
         }
 
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-
-        if (result === "timeout") {
-          setAuthError("認証状態の確認に時間がかかっています。ログイン画面からもう一度お試しください。");
-          setSession(null);
-          applyNavigationState({ route: "login" }, "replace");
-          setAuthLoading(false);
-          return;
-        }
-
-        const { data, error } = result;
+        sessionCheckSettled = true;
+        clearTimeout(timeoutId);
 
         if (error) {
           setAuthError(error.message);
+        } else {
+          setAuthError(null);
         }
 
         setSession(data.session);
@@ -164,9 +158,8 @@ export default function App() {
           return;
         }
 
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
+        sessionCheckSettled = true;
+        clearTimeout(timeoutId);
 
         setAuthError(error instanceof Error ? error.message : "認証状態の確認に失敗しました。");
         setAuthLoading(false);
@@ -190,26 +183,10 @@ export default function App() {
 
     return () => {
       mounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      return undefined;
-    }
-
-    const timeoutId = setTimeout(() => {
-      setFontLoadingTimedOut(true);
-    }, FONT_TIMEOUT_MS);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [fontError, fontsLoaded]);
 
   useEffect(() => {
     let mounted = true;
@@ -876,9 +853,7 @@ export default function App() {
         ? route
         : "list";
 
-  const waitingForFonts = !fontsLoaded && !fontError && !fontLoadingTimedOut;
-
-  if (waitingForFonts || authLoading) {
+  if (authLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.accentDark} />
