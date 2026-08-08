@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { Session } from "@supabase/supabase-js";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 
 import { BottomNav } from "./src/components/BottomNav";
@@ -17,7 +17,7 @@ import { PersonDetailScreen } from "./src/screens/PersonDetailScreen";
 import { PersonFormScreen } from "./src/screens/PersonFormScreen";
 import { ReflectionScreen } from "./src/screens/ReflectionScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
-import { supabase } from "./src/supabase/client";
+import { initialPasswordRecoveryInUrl, supabase } from "./src/supabase/client";
 import {
   createConversationNote,
   deleteConversationNote as deleteConversationNoteFromSupabase,
@@ -33,6 +33,7 @@ import type { AppRoute, ConversationNote, ConversationNoteDraft, Memo, MemoDraft
 const mainRoutes: AppRoute[] = ["home", "create", "list", "reflection", "people", "settings"];
 const allRoutes: AppRoute[] = [
   "login",
+  "passwordReset",
   "home",
   "create",
   "edit",
@@ -48,6 +49,9 @@ const allRoutes: AppRoute[] = [
   "settings"
 ];
 const conversationRoutes: AppRoute[] = ["personDetail", "conversationCreate", "conversationEdit"];
+const AUTH_TIMEOUT_MS = 10000;
+const AUTH_ACTION_TIMEOUT_MS = 20000;
+const FONT_TIMEOUT_MS = 6000;
 
 type BrowserNavigationState = {
   conversationNoteId?: string;
@@ -57,7 +61,8 @@ type BrowserNavigationState = {
 };
 
 export default function App() {
-  const [fontsLoaded] = useFonts(Ionicons.font);
+  const [fontsLoaded, fontError] = useFonts(Ionicons.font);
+  const [fontLoadingTimedOut, setFontLoadingTimedOut] = useState(false);
   const [route, setRoute] = useState<AppRoute>("login");
   const [memos, setMemos] = useState<Memo[]>([]);
   const [selectedMemoId, setSelectedMemoId] = useState("");
@@ -75,6 +80,7 @@ export default function App() {
   const [conversationNotesLoading, setConversationNotesLoading] = useState(false);
   const [conversationNotesError, setConversationNotesError] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState<WeekStart>("monday");
+  const passwordRecoveryDetectedRef = useRef(initialPasswordRecoveryInUrl);
 
   const applyNavigationState = (state: BrowserNavigationState, mode: "push" | "replace" = "push") => {
     setRoute(state.route);
@@ -97,6 +103,11 @@ export default function App() {
   const applyRouteFromLocation = (fallbackRoute: AppRoute) => {
     const browserState = readBrowserNavigationState();
 
+    if (passwordRecoveryDetectedRef.current || isPasswordRecoveryUrl()) {
+      applyNavigationState({ route: "passwordReset" }, "replace");
+      return;
+    }
+
     if (!browserState || browserState.route === "login") {
       applyNavigationState({ route: fallbackRoute }, "replace");
       return;
@@ -107,13 +118,32 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<"timeout">((resolve) => {
+      timeoutId = setTimeout(() => {
+        resolve("timeout");
+      }, AUTH_TIMEOUT_MS);
+    });
 
-    supabase.auth
-      .getSession()
-      .then(({ data, error }) => {
+    Promise.race([supabase.auth.getSession(), timeout])
+      .then((result) => {
         if (!mounted) {
           return;
         }
+
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+
+        if (result === "timeout") {
+          setAuthError("認証状態の確認に時間がかかっています。ログイン画面からもう一度お試しください。");
+          setSession(null);
+          applyNavigationState({ route: "login" }, "replace");
+          setAuthLoading(false);
+          return;
+        }
+
+        const { data, error } = result;
 
         if (error) {
           setAuthError(error.message);
@@ -122,6 +152,8 @@ export default function App() {
         setSession(data.session);
         if (data.session) {
           applyRouteFromLocation("home");
+        } else if (passwordRecoveryDetectedRef.current || isPasswordRecoveryUrl()) {
+          applyNavigationState({ route: "passwordReset" }, "replace");
         } else {
           applyNavigationState({ route: "login" }, "replace");
         }
@@ -132,15 +164,22 @@ export default function App() {
           return;
         }
 
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+
         setAuthError(error instanceof Error ? error.message : "認証状態の確認に失敗しました。");
         setAuthLoading(false);
       });
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
-      if (nextSession) {
+      if (event === "PASSWORD_RECOVERY") {
+        passwordRecoveryDetectedRef.current = true;
+        applyNavigationState({ route: "passwordReset" }, "replace");
+      } else if (nextSession) {
         applyRouteFromLocation("home");
       } else {
         applyNavigationState({ route: "login" }, "replace");
@@ -151,9 +190,26 @@ export default function App() {
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setFontLoadingTimedOut(true);
+    }, FONT_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [fontError, fontsLoaded]);
 
   useEffect(() => {
     let mounted = true;
@@ -496,27 +552,83 @@ export default function App() {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+        AUTH_ACTION_TIMEOUT_MS,
+        "ログインに時間がかかっています。通信状況を確認して、もう一度お試しください。"
+      );
 
-    if (error) {
-      return { error: error.message };
+      if (error) {
+        return { error: formatAuthError(error.message) };
+      }
+
+      return {};
+    } catch (error) {
+      return { error: formatAuthError(error instanceof Error ? error.message : "ログインに失敗しました。") };
     }
-
-    return {};
   };
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signUp({ email, password }),
+        AUTH_ACTION_TIMEOUT_MS,
+        "新規登録に時間がかかっています。通信状況を確認して、もう一度お試しください。"
+      );
 
-    if (error) {
-      return { error: error.message };
+      if (error) {
+        return { error: formatAuthError(error.message) };
+      }
+
+      if (!data.session) {
+        return { message: "確認メールを送信しました。メール内のリンクを開いて登録を完了してください。" };
+      }
+
+      return { message: "登録しました。" };
+    } catch (error) {
+      return { error: formatAuthError(error instanceof Error ? error.message : "新規登録に失敗しました。") };
     }
+  };
 
-    if (!data.session) {
-      return { message: "確認メールを送信しました。メール内のリンクを開いて登録を完了してください。" };
+  const requestPasswordReset = async (email: string) => {
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: getPasswordRecoveryRedirectUrl()
+        }),
+        AUTH_ACTION_TIMEOUT_MS,
+        "再設定メールの送信に時間がかかっています。通信状況を確認して、もう一度お試しください。"
+      );
+
+      if (error) {
+        return { error: formatAuthError(error.message) };
+      }
+
+      return { message: "パスワード再設定メールを送信しました。メール内のリンクから新しいパスワードを設定してください。" };
+    } catch (error) {
+      return { error: formatAuthError(error instanceof Error ? error.message : "再設定メールの送信に失敗しました。") };
     }
+  };
 
-    return { message: "登録しました。" };
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ password }),
+        AUTH_ACTION_TIMEOUT_MS,
+        "パスワード更新に時間がかかっています。再設定リンクを開き直して、もう一度お試しください。"
+      );
+
+      if (error) {
+        return { error: formatAuthError(error.message) };
+      }
+
+      passwordRecoveryDetectedRef.current = false;
+      applyNavigationState({ route: "home" }, "replace");
+      return { message: "パスワードを更新しました。" };
+    } catch (error) {
+      return { error: formatAuthError(error instanceof Error ? error.message : "パスワード更新に失敗しました。") };
+    }
   };
 
   const logout = async () => {
@@ -537,8 +649,29 @@ export default function App() {
   };
 
   const renderScreen = () => {
+    if (route === "passwordReset") {
+      return (
+        <LoginScreen
+          mode="passwordReset"
+          notice={authError}
+          onPasswordResetRequest={requestPasswordReset}
+          onPasswordUpdate={updatePassword}
+          onSignIn={signIn}
+          onSignUp={signUp}
+        />
+      );
+    }
+
     if (!session || route === "login") {
-      return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+      return (
+        <LoginScreen
+          notice={authError}
+          onPasswordResetRequest={requestPasswordReset}
+          onPasswordUpdate={updatePassword}
+          onSignIn={signIn}
+          onSignUp={signUp}
+        />
+      );
     }
 
     switch (route) {
@@ -743,7 +876,9 @@ export default function App() {
         ? route
         : "list";
 
-  if (!fontsLoaded || authLoading) {
+  const waitingForFonts = !fontsLoaded && !fontError && !fontLoadingTimedOut;
+
+  if (waitingForFonts || authLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.accentDark} />
@@ -756,7 +891,7 @@ export default function App() {
     <View style={styles.app}>
       <StatusBar style="dark" />
       <View style={styles.screen}>{renderScreen()}</View>
-      {session && route !== "login" ? <BottomNav activeRoute={activeRoute} onNavigate={navigate} /> : null}
+      {session && route !== "login" && route !== "passwordReset" ? <BottomNav activeRoute={activeRoute} onNavigate={navigate} /> : null}
     </View>
   );
 }
@@ -862,4 +997,63 @@ function writeBrowserNavigationState(state: BrowserNavigationState, mode: "push"
   }
 
   window.history.pushState(state, "", nextUrl);
+}
+
+function isPasswordRecoveryUrl() {
+  if (!canUseBrowserHistory()) {
+    return false;
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+
+  return searchParams.get("type") === "recovery" || hashParams.get("type") === "recovery";
+}
+
+function getPasswordRecoveryRedirectUrl() {
+  if (canUseBrowserHistory()) {
+    return window.location.origin;
+  }
+
+  return undefined;
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(timeoutMessage));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error: unknown) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+function formatAuthError(message: string) {
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("invalid login credentials")) {
+    return "メールアドレスまたはパスワードが違います。パスワードを忘れた場合は再設定してください。";
+  }
+
+  if (normalizedMessage.includes("email not confirmed")) {
+    return "メール確認がまだ完了していません。確認メールのリンクを開いてからログインしてください。";
+  }
+
+  if (normalizedMessage.includes("auth session missing") || normalizedMessage.includes("session")) {
+    return "再設定リンクの有効期限が切れている可能性があります。もう一度、再設定メールを送信してください。";
+  }
+
+  if (normalizedMessage.includes("password")) {
+    return "パスワードの処理に失敗しました。6文字以上で入力し、もう一度お試しください。";
+  }
+
+  return message;
 }

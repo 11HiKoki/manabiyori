@@ -14,6 +14,10 @@ declare const process: {
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const shouldDetectSessionInUrl = typeof window !== "undefined";
+export const initialPasswordRecoveryInUrl =
+  shouldDetectSessionInUrl &&
+  (new URLSearchParams(window.location.search).get("type") === "recovery" || new URLSearchParams(window.location.hash.replace(/^#/, "")).get("type") === "recovery");
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Supabase environment variables are missing.");
@@ -24,6 +28,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: shouldDetectSessionInUrl
   }
 });

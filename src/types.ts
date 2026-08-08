@@ -5,6 +5,7 @@ export type MemoKind = "気づき" | "学び" | "失敗" | "教訓" | "好奇心
 export type WeekStart = "monday" | "sunday";
 export type AppRoute =
   | "login"
+  | "passwordReset"
   | "home"
   | "create"
   | "edit"
