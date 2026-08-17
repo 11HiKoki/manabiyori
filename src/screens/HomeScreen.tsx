@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { MemoCard } from "../components/MemoCard";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -10,13 +10,16 @@ import type { AppRoute, Memo, MemoKind } from "../types";
 
 type HomeScreenProps = {
   memos: Memo[];
+  error?: string | null;
+  loading?: boolean;
   onNavigate: (route: AppRoute) => void;
   onOpenMemo: (memoId: string) => void;
+  onRetry?: () => void;
 };
 
 const kinds: MemoKind[] = ["気づき", "学び", "失敗", "教訓", "好奇心"];
 
-export function HomeScreen({ memos, onNavigate, onOpenMemo }: HomeScreenProps) {
+export function HomeScreen({ memos, error = null, loading = false, onNavigate, onOpenMemo, onRetry }: HomeScreenProps) {
   const weekStart = getWeekStartDate(new Date());
   const weeklyMemos = memos.filter((memo) => parseMemoDate(memo.date) >= weekStart);
   const openActions = memos.filter((memo) => !memo.nextActionDone);
@@ -35,6 +38,26 @@ export function HomeScreen({ memos, onNavigate, onOpenMemo }: HomeScreenProps) {
         </View>
         <PrimaryButton icon="create-outline" label="メモを書く" onPress={() => onNavigate("create")} />
       </View>
+
+      {error ? (
+        <View accessibilityLiveRegion="polite" style={[styles.statusPanel, styles.errorPanel]}>
+          <View style={styles.statusCopy}>
+            <Ionicons name="cloud-offline-outline" size={22} color={colors.coral} />
+            <View style={styles.statusText}>
+              <Text style={styles.statusTitle}>最新の記録を読み込めませんでした</Text>
+              <Text style={styles.statusDescription}>{error}</Text>
+            </View>
+          </View>
+          {onRetry ? <PrimaryButton icon="refresh-outline" label="もう一度読み込む" variant="ghost" onPress={onRetry} /> : null}
+        </View>
+      ) : loading && !hasMemos ? (
+        <View accessibilityLiveRegion="polite" style={styles.statusPanel}>
+          <View style={styles.statusCopy}>
+            <ActivityIndicator color={colors.accentDark} />
+            <Text style={styles.statusDescription}>最新の記録を読み込んでいます。</Text>
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.statsGrid}>
         <StatCard icon="calendar-outline" label="今週のメモ" value={`${weeklyMemos.length}件`} color={colors.accentDark} />
@@ -163,6 +186,40 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     gap: spacing.sm
+  },
+  statusPanel: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg
+  },
+  errorPanel: {
+    backgroundColor: colors.dangerSoft,
+    borderColor: colors.coral
+  },
+  statusCopy: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  statusText: {
+    flex: 1,
+    gap: spacing.xs
+  },
+  statusTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: 21
+  },
+  statusDescription: {
+    color: colors.textMuted,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19
   },
   statCard: {
     alignItems: "flex-start",

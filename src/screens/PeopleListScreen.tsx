@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { PrimaryButton } from "../components/PrimaryButton";
+import { SearchField } from "../components/SearchField";
 import { ScreenShell } from "../components/ScreenShell";
 import { colors, radii, shadows, spacing } from "../theme";
 import type { PersonProfile } from "../types";
@@ -46,13 +47,7 @@ export function PeopleListScreen({ people, loading = false, error = null, onCrea
   return (
     <ScreenShell title="人一覧" subtitle="会った人のプロフィールを、次の会話につながる形で残します。">
       <View style={styles.topActions}>
-        <TextInput
-          placeholder="名前・関係性・好きなもので検索"
-          placeholderTextColor={colors.textMuted}
-          style={styles.search}
-          value={query}
-          onChangeText={setQuery}
-        />
+        <SearchField label="人を検索" placeholder="名前・関係性・好きなものなど" value={query} onChangeText={setQuery} />
         <PrimaryButton icon="person-add-outline" label="人を登録" onPress={onCreate} />
       </View>
 
@@ -63,20 +58,42 @@ export function PeopleListScreen({ people, loading = false, error = null, onCrea
 
       {error ? (
         <View style={styles.messagePanel}>
-          <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.messageHeading}>
+            <Ionicons name="cloud-offline-outline" size={22} color={colors.coral} />
+            <Text accessibilityLiveRegion="polite" style={styles.errorText}>{error}</Text>
+          </View>
           {onRetry ? <PrimaryButton icon="refresh-outline" label="再読み込み" variant="ghost" onPress={onRetry} /> : null}
         </View>
       ) : null}
 
-      <View style={styles.stack}>
-        {filteredPeople.length > 0 ? (
-          filteredPeople.map((person) => <PersonCard key={person.id} person={person} onPress={() => onOpenPerson(person.id)} />)
-        ) : (
-          <View style={styles.messagePanel}>
-            <Text style={styles.emptyText}>{loading ? "人一覧を読み込んでいます。" : "まだ人物プロフィールがありません。"}</Text>
-          </View>
-        )}
-      </View>
+      {error && people.length === 0 ? null : (
+        <View style={styles.stack}>
+          {filteredPeople.length > 0 ? (
+            filteredPeople.map((person) => <PersonCard key={person.id} person={person} onPress={() => onOpenPerson(person.id)} />)
+          ) : loading ? (
+            <View style={styles.messagePanel}>
+              <View style={styles.loadingRow}>
+                <ActivityIndicator color={colors.accentDark} />
+                <Text style={styles.emptyText}>人一覧を読み込んでいます。</Text>
+              </View>
+            </View>
+          ) : query.trim() ? (
+            <View style={styles.messagePanel}>
+              <Ionicons name="search-outline" size={26} color={colors.accentDark} />
+              <Text style={styles.messageTitle}>条件に合う人が見つかりません</Text>
+              <Text style={styles.emptyText}>名前を短くするか、別の関係性・好きなものでも探してみてください。</Text>
+              <PrimaryButton icon="close-circle-outline" label="検索語をクリア" variant="ghost" onPress={() => setQuery("")} />
+            </View>
+          ) : (
+            <View style={styles.messagePanel}>
+              <Ionicons name="people-outline" size={26} color={colors.accentDark} />
+              <Text style={styles.messageTitle}>まだ人物プロフィールがありません</Text>
+              <Text style={styles.emptyText}>次に会ったとき思い出したいことを、一人分から残せます。</Text>
+              <PrimaryButton icon="person-add-outline" label="最初の人を登録" onPress={onCreate} />
+            </View>
+          )}
+        </View>
+      )}
     </ScreenShell>
   );
 }
@@ -114,16 +131,6 @@ function PersonCard({ person, onPress }: { person: PersonProfile; onPress: () =>
 const styles = StyleSheet.create({
   topActions: {
     gap: spacing.md
-  },
-  search: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: 15,
-    minHeight: 50,
-    paddingHorizontal: spacing.lg
   },
   resultHeader: {
     alignItems: "center",
@@ -209,8 +216,25 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.lg
   },
+  messageHeading: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: spacing.sm
+  },
+  loadingRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  messageTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "900",
+    lineHeight: 22
+  },
   errorText: {
     color: colors.coral,
+    flex: 1,
     fontSize: 14,
     fontWeight: "800",
     lineHeight: 20

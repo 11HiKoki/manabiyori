@@ -245,7 +245,7 @@ export function PersonFormScreen({
 
           <View style={styles.actions}>
             <PrimaryButton disabled={saving} icon="close-outline" label="キャンセル" variant="ghost" onPress={() => void cancel()} style={styles.actionButton} />
-            <PrimaryButton disabled={saving} icon="checkmark-outline" label={saving ? "保存中" : submitLabel} onPress={save} style={styles.actionButton} />
+            <PrimaryButton disabled={saving} icon="checkmark-outline" label={saving ? "保存中" : submitLabel} loading={saving} onPress={save} style={styles.actionButton} />
           </View>
         </View>
       </ScreenShell>

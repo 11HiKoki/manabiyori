@@ -35,7 +35,9 @@ export function BottomNav({ activeRoute, onNavigate }: BottomNavProps) {
 
         return (
           <Pressable
+            accessibilityLabel={item.label}
             accessibilityRole="button"
+            accessibilityState={{ selected: active }}
             key={item.route}
             onPress={() => onNavigate(item.route)}
             style={({ pressed }) => [styles.item, active ? styles.activeItem : null, pressed ? styles.pressed : null]}

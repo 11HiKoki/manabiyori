@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
 
 import { colors, radii, spacing } from "../theme";
 
@@ -11,26 +11,32 @@ type PrimaryButtonProps = {
   variant?: "primary" | "secondary" | "ghost";
   onPress: () => void | Promise<void>;
   disabled?: boolean;
+  loading?: boolean;
   style?: ViewStyle;
 };
 
-export function PrimaryButton({ label, icon, variant = "primary", onPress, disabled = false, style }: PrimaryButtonProps) {
+export function PrimaryButton({ label, icon, variant = "primary", onPress, disabled = false, loading = false, style }: PrimaryButtonProps) {
+  const unavailable = disabled || loading;
+  const contentColor = variant === "primary" ? colors.white : colors.accentDark;
+
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="button"
-      disabled={disabled}
+      accessibilityState={{ busy: loading, disabled: unavailable }}
+      disabled={unavailable}
       onPress={() => {
         void onPress();
       }}
       style={({ pressed }) => [
         styles.button,
         styles[variant],
-        pressed && !disabled ? styles.pressed : null,
-        disabled ? styles.disabled : null,
+        pressed && !unavailable ? styles.pressed : null,
+        unavailable ? styles.disabled : null,
         style
       ]}
     >
-      {icon ? <Ionicons name={icon} size={18} color={variant === "primary" ? colors.white : colors.accentDark} /> : null}
+      {loading ? <ActivityIndicator color={contentColor} size="small" /> : icon ? <Ionicons name={icon} size={18} color={contentColor} /> : null}
       <Text style={[styles.label, variant === "primary" ? styles.primaryLabel : styles.secondaryLabel]}>{label}</Text>
     </Pressable>
   );

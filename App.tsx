@@ -138,7 +138,7 @@ export default function App() {
         clearTimeout(timeoutId);
 
         if (error) {
-          setAuthError(error.message);
+          setAuthError(formatAuthError(error.message));
         } else {
           setAuthError(null);
         }
@@ -161,7 +161,7 @@ export default function App() {
         sessionCheckSettled = true;
         clearTimeout(timeoutId);
 
-        setAuthError(error instanceof Error ? error.message : "認証状態の確認に失敗しました。");
+        setAuthError(formatAuthError(error instanceof Error ? error.message : "認証状態の確認に失敗しました。"));
         setAuthLoading(false);
       });
 
@@ -307,7 +307,7 @@ export default function App() {
     const result = await fetchMemos(userId);
 
     if (result.error) {
-      setMemosError(result.error);
+      setMemosError(formatDataError(result.error, "メモを読み込めませんでした。"));
     } else {
       setMemos(result.memos);
       setSelectedMemoId((current) => (current && result.memos.some((memo) => memo.id === current) ? current : result.memos[0]?.id ?? ""));
@@ -324,7 +324,7 @@ export default function App() {
     const result = await createMemo(session.user.id, draft);
 
     if (result.error || !result.memo) {
-      return { error: result.error ?? "メモの保存に失敗しました。" };
+      return { error: formatDataError(result.error, "メモを保存できませんでした。") };
     }
 
     setMemos((current) => [result.memo, ...current]);
@@ -344,7 +344,7 @@ export default function App() {
     const result = await updateMemo(session.user.id, selectedMemo.id, draft);
 
     if (result.error || !result.memo) {
-      return { error: result.error ?? "メモの更新に失敗しました。" };
+      return { error: formatDataError(result.error, "メモを更新できませんでした。") };
     }
 
     setMemos((current) => sortMemos(current.map((memo) => (memo.id === result.memo.id ? result.memo : memo))));
@@ -364,7 +364,7 @@ export default function App() {
     const result = await deleteMemoFromSupabase(session.user.id, selectedMemo.id);
 
     if (result.error) {
-      return { error: result.error };
+      return { error: formatDataError(result.error, "メモを削除できませんでした。") };
     }
 
     const nextMemos = memos.filter((memo) => memo.id !== selectedMemo.id);
@@ -380,7 +380,7 @@ export default function App() {
     const result = await fetchPeople(userId);
 
     if (result.error) {
-      setPeopleError(result.error);
+      setPeopleError(formatDataError(result.error, "人一覧を読み込めませんでした。"));
     } else {
       setPeople(result.people);
       setSelectedPersonId((current) => (current && result.people.some((person) => person.id === current) ? current : result.people[0]?.id ?? ""));
@@ -396,7 +396,7 @@ export default function App() {
     const result = await fetchConversationNotes(userId, personId);
 
     if (result.error) {
-      setConversationNotesError(result.error);
+      setConversationNotesError(formatDataError(result.error, "会話メモを読み込めませんでした。"));
       setConversationNotes([]);
     } else {
       setConversationNotes(result.conversationNotes);
@@ -416,7 +416,7 @@ export default function App() {
     const result = await createPerson(session.user.id, draft);
 
     if (result.error || !result.person) {
-      return { error: result.error ?? "人物プロフィールの保存に失敗しました。" };
+      return { error: formatDataError(result.error, "人物プロフィールを保存できませんでした。") };
     }
 
     setPeople((current) => [result.person, ...current]);
@@ -438,7 +438,7 @@ export default function App() {
     const result = await updatePerson(session.user.id, selectedPerson.id, draft);
 
     if (result.error || !result.person) {
-      return { error: result.error ?? "人物プロフィールの更新に失敗しました。" };
+      return { error: formatDataError(result.error, "人物プロフィールを更新できませんでした。") };
     }
 
     setPeople((current) => current.map((person) => (person.id === result.person.id ? result.person : person)));
@@ -458,7 +458,7 @@ export default function App() {
     const result = await deletePersonFromSupabase(session.user.id, selectedPerson.id);
 
     if (result.error) {
-      return { error: result.error };
+      return { error: formatDataError(result.error, "人物プロフィールを削除できませんでした。") };
     }
 
     const nextPeople = people.filter((person) => person.id !== selectedPerson.id);
@@ -478,7 +478,7 @@ export default function App() {
     const result = await createConversationNote(session.user.id, draft);
 
     if (result.error || !result.conversationNote) {
-      return { error: result.error ?? "会話メモの保存に失敗しました。" };
+      return { error: formatDataError(result.error, "会話メモを保存できませんでした。") };
     }
 
     setConversationNotes((current) => sortConversationNotes([result.conversationNote, ...current]));
@@ -498,7 +498,7 @@ export default function App() {
     const result = await updateConversationNote(session.user.id, selectedPerson.id, selectedConversationNote.id, draft);
 
     if (result.error || !result.conversationNote) {
-      return { error: result.error ?? "会話メモの更新に失敗しました。" };
+      return { error: formatDataError(result.error, "会話メモを更新できませんでした。") };
     }
 
     setConversationNotes((current) =>
@@ -520,7 +520,7 @@ export default function App() {
     const result = await deleteConversationNoteFromSupabase(session.user.id, selectedPerson.id, conversationNoteId);
 
     if (result.error) {
-      return { error: result.error };
+      return { error: formatDataError(result.error, "会話メモを削除できませんでした。") };
     }
 
     applyNavigationState({ conversationNoteId: "", personId: selectedPerson.id, route: "personDetail" });
@@ -612,7 +612,7 @@ export default function App() {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      setAuthError(error.message);
+      setAuthError(formatAuthError(error.message));
     }
   };
 
@@ -653,7 +653,20 @@ export default function App() {
 
     switch (route) {
       case "home":
-        return <HomeScreen memos={memos} onNavigate={navigate} onOpenMemo={openMemo} />;
+        return (
+          <HomeScreen
+            error={memosError}
+            loading={memosLoading}
+            memos={memos}
+            onNavigate={navigate}
+            onOpenMemo={openMemo}
+            onRetry={() => {
+              if (session) {
+                void loadMemos(session.user.id);
+              }
+            }}
+          />
+        );
       case "create":
         return <MemoFormScreen people={people} onSave={addMemo} onCancel={() => navigate("home")} />;
       case "edit":
@@ -672,6 +685,7 @@ export default function App() {
             error={memosError}
             loading={memosLoading}
             memos={memos}
+            onCreate={() => navigate("create")}
             onOpenMemo={openMemo}
             onRetry={() => {
               if (session) {
@@ -686,6 +700,7 @@ export default function App() {
             error={memosError}
             loading={memosLoading}
             memos={memos}
+            onCreate={() => navigate("create")}
             onOpenMemo={openMemo}
             onRetry={() => {
               if (session) {
@@ -709,6 +724,7 @@ export default function App() {
             error={memosError}
             loading={memosLoading}
             memos={memos}
+            onCreate={() => navigate("create")}
             onOpenMemo={openMemo}
             onRetry={() => {
               if (session) {
@@ -842,7 +858,20 @@ export default function App() {
       case "settings":
         return <SettingsScreen onLogout={logout} onWeekStartChange={changeWeekStart} userEmail={session.user.email} weekStart={weekStart} />;
       default:
-        return <HomeScreen memos={memos} onNavigate={navigate} onOpenMemo={openMemo} />;
+        return (
+          <HomeScreen
+            error={memosError}
+            loading={memosLoading}
+            memos={memos}
+            onNavigate={navigate}
+            onOpenMemo={openMemo}
+            onRetry={() => {
+              if (session) {
+                void loadMemos(session.user.id);
+              }
+            }}
+          />
+        );
     }
   };
 
@@ -993,6 +1022,32 @@ function getPasswordRecoveryRedirectUrl() {
   return undefined;
 }
 
+function formatDataError(message: string | undefined, fallback: string) {
+  if (!message) {
+    return fallback;
+  }
+
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("project is paused") || normalizedMessage.includes("restoration in progress")) {
+    return `${fallback} データベースを再開しています。数分待ってから、もう一度お試しください。`;
+  }
+
+  if (
+    normalizedMessage.includes("failed to fetch") ||
+    normalizedMessage.includes("fetch failed") ||
+    normalizedMessage.includes("network request failed") ||
+    normalizedMessage.includes("gateway") ||
+    normalizedMessage.includes("502") ||
+    normalizedMessage.includes("503") ||
+    normalizedMessage.includes("504")
+  ) {
+    return `${fallback} サーバーに接続できません。通信状況を確認し、少し待ってからもう一度お試しください。`;
+  }
+
+  return message;
+}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string) {
   return new Promise<T>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -1013,6 +1068,19 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: 
 
 function formatAuthError(message: string) {
   const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("project is paused") || normalizedMessage.includes("restoration in progress")) {
+    return "データベースを再開しています。数分待ってから、もう一度お試しください。";
+  }
+
+  if (
+    normalizedMessage.includes("failed to fetch") ||
+    normalizedMessage.includes("fetch failed") ||
+    normalizedMessage.includes("network request failed") ||
+    normalizedMessage.includes("gateway")
+  ) {
+    return "サーバーに接続できません。通信状況を確認し、少し待ってからもう一度お試しください。";
+  }
 
   if (normalizedMessage.includes("invalid login credentials")) {
     return "メールアドレスまたはパスワードが違います。パスワードを忘れた場合は再設定してください。";
